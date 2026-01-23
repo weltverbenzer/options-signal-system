@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Options Signal System</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #eaeaea;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #e94560;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+
+        .status {
+            background: #16213e;
+            border-radius: 15px;
+            padding: 40px;
+            margin: 30px 0;
+        }
+
+        .status h2 {
+            color: #ffc107;
+            margin-bottom: 15px;
+        }
+
+        .status p {
+            color: #888;
+            line-height: 1.6;
+        }
+
+        .info-box {
+            background: #0f3460;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .info-box h3 {
+            color: #28a745;
+            margin-bottom: 10px;
+        }
+
+        .info-box ul {
+            text-align: left;
+            list-style: none;
+            color: #aaa;
+        }
+
+        .info-box li {
+            padding: 5px 0;
+        }
+
+        .info-box li::before {
+            content: "✓ ";
+            color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Options Signal System</h1>
+
+        <div class="status">
+            <h2>System wird eingerichtet</h2>
+            <p>
+                Sobald das System aktiviert ist, werden hier taeglich
+                Iron Condor Signale fuer SPY angezeigt.
+            </p>
+        </div>
+
+        <div class="info-box">
+            <h3>Naechste Schritte</h3>
+            <ul>
+                <li>GitHub Secrets konfigurieren</li>
+                <li>GitHub Actions aktivieren</li>
+                <li>GitHub Pages einrichten</li>
+                <li>Ersten Workflow-Run ausloesen</li>
+            </ul>
+        </div>
+
+        <p style="margin-top: 30px; color: #666; font-size: 0.85rem;">
+            Options Signal System | Automatisierte 0DTE Iron Condor Signale
+        </p>
+    </div>
+</body>
+</html>

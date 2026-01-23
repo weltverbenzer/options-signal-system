@@ -1,0 +1,86 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# OPTIONS SIGNAL SYSTEM - KONFIGURATION
+# ═══════════════════════════════════════════════════════════════════════════
+# Kopiere diese Datei nach "config.yaml" und trage deine Daten ein.
+# config.yaml wird NICHT ins Git-Repository hochgeladen (Sicherheit!)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# KONTO-EINSTELLUNGEN
+# ─────────────────────────────────────────────────────────────────────────────
+account:
+  # Dein Trading-Kapital in USD
+  capital: 5000
+
+  # Maximales Risiko pro Trade in Prozent (2 = 2%)
+  max_risk_percent: 2
+
+  # Maximaler Verlust pro Tag in Prozent
+  max_daily_loss_percent: 5
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SIGNAL-EINSTELLUNGEN
+# ─────────────────────────────────────────────────────────────────────────────
+signal:
+  # Symbol fuer 0DTE Optionen
+  symbol: SPY
+
+  # Delta fuer Short Strikes (0.10 bis 0.16 empfohlen)
+  short_delta: 0.12
+
+  # Breite der Wings in USD
+  wing_width: 2
+
+  # Minimaler VIX fuer Signal (darunter zu wenig Premium)
+  min_vix: 12
+
+  # Maximaler VIX fuer Signal (darueber zu riskant)
+  max_vix: 25
+
+  # Minimaler IV Percentile (0-100)
+  min_iv_percentile: 20
+
+# ─────────────────────────────────────────────────────────────────────────────
+# E-MAIL-EINSTELLUNGEN
+# ─────────────────────────────────────────────────────────────────────────────
+email:
+  # Aktiviere E-Mail-Versand
+  enabled: true
+
+  # Deine E-Mail-Adresse fuer den Empfang der Signale
+  recipient: "trading@jwitt.eu"
+
+  # SMTP-Einstellungen
+  smtp:
+    server: "w01723fb.kasserver.com"
+    port: 587
+    username: "trading@jwitt.eu"
+    # WICHTIG: Passwort NICHT hier eintragen!
+    # Speichere es als GitHub Secret: SMTP_PASSWORD
+    password: ""
+
+# ─────────────────────────────────────────────────────────────────────────────
+# WEBSEITEN-EINSTELLUNGEN
+# ─────────────────────────────────────────────────────────────────────────────
+website:
+  # Aktiviere Webseiten-Generierung
+  enabled: true
+
+  # Ausgabe-Verzeichnis fuer HTML
+  output_dir: "docs"
+
+  # Titel der Webseite
+  title: "Options Signal System"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ZEITPLANUNG (fuer lokale Ausfuehrung)
+# ─────────────────────────────────────────────────────────────────────────────
+schedule:
+  # Uhrzeit fuer Signal-Generierung (Format: HH:MM)
+  # 15:00 MEZ = 30 Min vor US-Markteroeffnung
+  time: "15:00"
+
+  # Zeitzone
+  timezone: "Europe/Berlin"
+
+  # Nur an Handelstagen ausfuehren
+  trading_days_only: true

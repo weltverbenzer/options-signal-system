@@ -1,0 +1,26 @@
+# Options Signal System - Dependencies
+# Installation: pip install -r requirements.txt
+
+# Marktdaten
+yfinance>=0.2.36
+
+# Datenverarbeitung
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Konfiguration
+pyyaml>=6.0
+
+# HTTP-Requests
+requests>=2.31.0
+
+# Datum/Zeit
+python-dateutil>=2.8.2
+pytz>=2024.1
+
+# E-Mail (Standard-Bibliothek, nur zur Dokumentation)
+# smtplib - eingebaut
+# email - eingebaut
+
+# Optional: Fuer spaeteren IB API Zugang
+# ib_insync>=0.9.86
