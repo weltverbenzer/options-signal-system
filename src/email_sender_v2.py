@@ -84,6 +84,8 @@ class EmailSenderV2:
                 lines.append(f"  NICHT HANDELBAR: {d.get('reason', 'Unbekannt')}")
             if c.warnings:
                 lines.append(f"  WARNUNG: {', '.join(c.warnings)}")
+            lines.append(f"  QUELLEN: {c.source_url_quote}")
+            lines.append(f"           {c.source_url_options}")
 
         lines.extend([
             "",
@@ -109,6 +111,10 @@ class EmailSenderV2:
                 lines.append(f"  NICHT HANDELBAR: {d.get('reason', 'Unbekannt')}")
             if c.warnings:
                 lines.append(f"  WARNUNG: {', '.join(c.warnings)}")
+            lines.append(f"  QUELLEN: {c.source_url_quote}")
+            lines.append(f"           {c.source_url_options}")
+            if c.earnings_date:
+                lines.append(f"           {c.source_url_earnings}")
 
         lines.extend([
             "",
@@ -263,6 +269,20 @@ class EmailSenderV2:
             color: #ffc107;
             font-size: 13px;
         }}
+        .sources {{
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px solid #333;
+            font-size: 12px;
+        }}
+        .sources a {{
+            color: #4dabf7;
+            text-decoration: none;
+            margin-right: 15px;
+        }}
+        .sources a:hover {{
+            text-decoration: underline;
+        }}
         .footer {{
             text-align: center;
             padding: 20px;
@@ -392,6 +412,16 @@ class EmailSenderV2:
 
         score = c.iron_condor_score if strategy == "iron_condor" else c.straddle_score
 
+        # Quellen-Links
+        sources_html = f"""
+        <div class="sources">
+            <strong>Quellen:</strong>
+            <a href="{c.source_url_quote}" target="_blank">Kurs</a>
+            <a href="{c.source_url_options}" target="_blank">Optionen</a>
+            {'<a href="' + c.source_url_earnings + '" target="_blank">Earnings</a>' if c.earnings_date else ''}
+        </div>
+        """
+
         return f"""
         <div class="{card_class}">
             <div class="card-header">
@@ -409,5 +439,6 @@ class EmailSenderV2:
             </div>
             {trade_html}
             {warnings_html}
+            {sources_html}
         </div>
         """

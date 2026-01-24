@@ -76,6 +76,11 @@ class ScreenerResult:
     avg_option_volume: int
     bid_ask_spread_pct: float
 
+    # Quellen-Links (fuer Nachpruefbarkeit)
+    source_url_quote: str = ""      # Yahoo Finance Quote
+    source_url_options: str = ""    # Yahoo Finance Options
+    source_url_earnings: str = ""   # Earnings Kalender
+
     def to_dict(self) -> dict:
         return {
             'symbol': self.symbol,
@@ -92,7 +97,10 @@ class ScreenerResult:
             'earnings_date': self.earnings_date,
             'days_to_earnings': self.days_to_earnings,
             'options_liquid': self.options_liquid,
-            'bid_ask_spread_pct': self.bid_ask_spread_pct
+            'bid_ask_spread_pct': self.bid_ask_spread_pct,
+            'source_url_quote': self.source_url_quote,
+            'source_url_options': self.source_url_options,
+            'source_url_earnings': self.source_url_earnings
         }
 
 
@@ -105,6 +113,10 @@ class StockScreener:
     def screen_all(self) -> Dict[str, List[ScreenerResult]]:
         """
         Screent alle Symbole in der Watchlist.
+
+        WICHTIG: Jedes Symbol wird NUR EINER Kategorie zugeordnet!
+        - Hat Earnings bald? -> Straddle
+        - Keine Earnings + niedriger Expected Move? -> Iron Condor
 
         Returns:
             Dict mit 'iron_condor' und 'straddle' Listen
@@ -122,15 +134,38 @@ class StockScreener:
                 print(f"  Fehler bei {symbol}: {e}")
                 continue
 
-        # Sortieren nach Score
+        # WICHTIG: Jedes Symbol nur in EINER Kategorie!
+        iron_condor_candidates = []
+        straddle_candidates = []
+
+        for r in results:
+            if not r.options_liquid:
+                continue  # Keine illiquiden Optionen
+
+            # Primaere Entscheidung: Earnings?
+            if r.has_earnings_soon:
+                # Earnings = Straddle Kandidat (NICHT Iron Condor!)
+                if r.straddle_score > 40:
+                    straddle_candidates.append(r)
+            else:
+                # Keine Earnings - aber Expected Move pruefen!
+                # Iron Condor NUR wenn Expected Move < 2%
+                if r.expected_move_pct < 2.0 and r.iron_condor_score > 50:
+                    iron_condor_candidates.append(r)
+                elif r.expected_move_pct >= 3.0:
+                    # Hoher Expected Move OHNE Earnings = auch Straddle moeglich
+                    if r.straddle_score > 50:
+                        straddle_candidates.append(r)
+
+        # Sortieren und Top 5
         iron_condor_candidates = sorted(
-            [r for r in results if r.iron_condor_score > 50 and r.options_liquid],
+            iron_condor_candidates,
             key=lambda x: x.iron_condor_score,
             reverse=True
         )[:5]
 
         straddle_candidates = sorted(
-            [r for r in results if r.straddle_score > 50 and r.options_liquid],
+            straddle_candidates,
             key=lambda x: x.straddle_score,
             reverse=True
         )[:5]
@@ -185,6 +220,11 @@ class StockScreener:
         else:
             recommended = "NONE"
 
+        # Quellen-URLs generieren
+        source_quote = f"https://finance.yahoo.com/quote/{symbol}"
+        source_options = f"https://finance.yahoo.com/quote/{symbol}/options"
+        source_earnings = f"https://finance.yahoo.com/quote/{symbol}/analysis"
+
         return ScreenerResult(
             symbol=symbol,
             company_name=company_name,
@@ -202,7 +242,10 @@ class StockScreener:
             days_to_earnings=earnings_info.get('days_to_earnings'),
             options_liquid=liquidity_info.get('is_liquid', False),
             avg_option_volume=liquidity_info.get('avg_volume', 0),
-            bid_ask_spread_pct=liquidity_info.get('spread_pct', 0)
+            bid_ask_spread_pct=liquidity_info.get('spread_pct', 0),
+            source_url_quote=source_quote,
+            source_url_options=source_options,
+            source_url_earnings=source_earnings
         )
 
     def _check_earnings(self, ticker) -> Dict:
@@ -384,20 +427,36 @@ class StockScreener:
         iv_pct = iv.get('iv_percentile', 50)
         expected_move = iv.get('expected_move', 0)
 
+        # IV Einfluss
         if iv_pct > 70:
-            ic_score += 10  # Hohe IV = mehr Premium
-            reasons.append(f"Hohe IV ({iv_pct:.0f}%) - gutes Premium")
+            # Hohe IV: Gut fuer Premium-Verkauf, aber auch riskanter
+            if expected_move < 2:
+                ic_score += 10
+                reasons.append(f"Hohe IV ({iv_pct:.0f}%) bei niedrigem Expected Move - gutes Premium")
+            else:
+                # Hohe IV + hoher Expected Move = GEFAEHRLICH fuer Iron Condor!
+                ic_score -= 20
+                st_score += 15
+                reasons.append(f"Hohe IV ({iv_pct:.0f}%) mit hohem Expected Move - Vorsicht!")
         elif iv_pct < 30:
-            st_score += 10  # Niedrige IV = guenstiger Straddle
-            reasons.append(f"Niedrige IV ({iv_pct:.0f}%) - guenstiger Einstieg")
+            st_score += 10
+            reasons.append(f"Niedrige IV ({iv_pct:.0f}%) - guenstiger Straddle-Einstieg")
 
-        if expected_move > 3:
-            st_score += 15
-            ic_score -= 10
-            reasons.append(f"Hoher Expected Move ({expected_move:.1f}%)")
+        # EXPECTED MOVE - KRITISCH fuer Iron Condor!
+        if expected_move >= 3:
+            # Hoher Expected Move = DISQUALIFIKATION fuer Iron Condor
+            ic_score -= 40  # Starke Strafe!
+            st_score += 20
+            reasons.append(f"HOHER Expected Move ({expected_move:.1f}%) - NUR Straddle!")
+        elif expected_move >= 2:
+            # Mittlerer Expected Move = Iron Condor riskant
+            ic_score -= 20
+            st_score += 10
+            reasons.append(f"Expected Move ({expected_move:.1f}%) - Iron Condor riskant")
         elif expected_move < 1.5:
-            ic_score += 10
-            reasons.append(f"Niedriger Expected Move ({expected_move:.1f}%)")
+            # Niedriger Expected Move = ideal fuer Iron Condor
+            ic_score += 15
+            reasons.append(f"Niedriger Expected Move ({expected_move:.1f}%) - ideal fuer Iron Condor")
 
         # === LIQUIDITAET ===
         if not liquidity.get('is_liquid'):

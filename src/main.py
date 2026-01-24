@@ -92,8 +92,12 @@ def generate_iron_condor_details(symbol: str, config: dict) -> dict:
         return {'valid': False, 'reason': str(e)}
 
 
-def generate_straddle_details(symbol: str, current_price: float) -> dict:
-    """Generiert konkrete Straddle Details fuer ein Symbol"""
+def generate_straddle_details(symbol: str, current_price: float, capital: int = 5000) -> dict:
+    """
+    Generiert konkrete Straddle Details fuer ein Symbol.
+
+    WICHTIG: Begrenzt Kosten auf max. 10% des Kapitals!
+    """
     try:
         import yfinance as yf
         ticker = yf.Ticker(symbol)
@@ -127,6 +131,18 @@ def generate_straddle_details(symbol: str, current_price: float) -> dict:
         breakeven_up = atm_call['strike'] + call_price + put_price
         breakeven_down = atm_put['strike'] - call_price - put_price
 
+        # MAX 10% DES KAPITALS!
+        max_allowed = capital * 0.10
+        risk_pct = (total_cost / capital) * 100
+
+        if total_cost > max_allowed:
+            return {
+                'valid': False,
+                'reason': f'Zu teuer: ${total_cost:.0f} = {risk_pct:.0f}% vom Konto (max. 10% = ${max_allowed:.0f} erlaubt)',
+                'total_cost': total_cost,
+                'risk_pct': risk_pct
+            }
+
         return {
             'valid': True,
             'expiry': expiry,
@@ -135,6 +151,7 @@ def generate_straddle_details(symbol: str, current_price: float) -> dict:
             'call_price': call_price,
             'put_price': put_price,
             'total_cost': total_cost,
+            'risk_pct': risk_pct,
             'breakeven_up': breakeven_up,
             'breakeven_down': breakeven_down,
             'breakeven_move_pct': ((breakeven_up - current_price) / current_price) * 100
@@ -177,9 +194,10 @@ def run_screening(config: dict) -> dict:
         })
 
     st_details = []
+    capital = config.get('account', {}).get('capital', 5000)
     for candidate in straddle_candidates[:3]:
         print(f"  Berechne Straddle fuer {candidate.symbol}...")
-        details = generate_straddle_details(candidate.symbol, candidate.current_price)
+        details = generate_straddle_details(candidate.symbol, candidate.current_price, capital)
         st_details.append({
             'candidate': candidate,
             'details': details
