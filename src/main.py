@@ -260,11 +260,20 @@ def main():
             print(f"  Warnungen: {', '.join(c.warnings)}")
 
     if args.dry_run:
-        print("\n[DRY-RUN] Kein E-Mail-Versand")
+        print("\n[DRY-RUN] Kein E-Mail/Website-Generierung")
         return True
 
+    # Website generieren
+    print("\n[3/4] Generiere Website...")
+    website_gen = WebsiteGenerator(config)
+    if website_gen.enabled:
+        success = website_gen.generate_v2(results)
+        print(f"  Website: {'Generiert' if success else 'Fehler'}")
+    else:
+        print("  Website deaktiviert")
+
     # E-Mail senden
-    print("\n[3/3] Sende E-Mail...")
+    print("\n[4/4] Sende E-Mail...")
     email_sender = EmailSenderV2(config)
     if email_sender.enabled:
         success = email_sender.send_candidates(results)
