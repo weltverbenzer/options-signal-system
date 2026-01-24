@@ -16,32 +16,145 @@ from dataclasses import dataclass
 import requests
 
 
-# Standard-Watchlist: Liquide Aktien und Indizes mit guten Optionsmaerkten
+# ERWEITERTE Watchlist: 100+ Aktien, inkl. GUENSTIGE fuer kleine Konten
 DEFAULT_WATCHLIST = [
-    # Indizes/ETFs
-    "SPY",   # S&P 500 ETF
-    "QQQ",   # Nasdaq 100 ETF
-    "IWM",   # Russell 2000 ETF
+    # === INDIZES/ETFs ===
+    "SPY",   # S&P 500 ETF (~$480)
+    "QQQ",   # Nasdaq 100 ETF (~$430)
+    "IWM",   # Russell 2000 ETF (~$200)
+    "XLF",   # Financial Sector ETF (~$42)
+    "XLE",   # Energy Sector ETF (~$85)
+    "EEM",   # Emerging Markets (~$40)
+    "GLD",   # Gold ETF (~$180)
+    "SLV",   # Silver ETF (~$22)
+    "TLT",   # 20+ Year Treasury (~$90)
 
-    # Big Tech
-    "AAPL",  # Apple
-    "MSFT",  # Microsoft
-    "GOOGL", # Alphabet
-    "AMZN",  # Amazon
-    "NVDA",  # Nvidia
-    "META",  # Meta
-    "TSLA",  # Tesla
+    # === BIG TECH (teuer, aber liquid) ===
+    "AAPL",  # Apple (~$190)
+    "MSFT",  # Microsoft (~$400)
+    "GOOGL", # Alphabet (~$175)
+    "AMZN",  # Amazon (~$185)
+    "NVDA",  # Nvidia (~$550)
+    "META",  # Meta (~$380)
+    "TSLA",  # Tesla (~$180)
 
-    # Weitere liquide Aktien
-    "AMD",   # AMD
-    "NFLX",  # Netflix
-    "JPM",   # JP Morgan
-    "BAC",   # Bank of America
-    "DIS",   # Disney
-    "BA",    # Boeing
-    "NKE",   # Nike
-    "V",     # Visa
-    "MA",    # Mastercard
+    # === MID-CAP TECH (guenstiger!) ===
+    "AMD",   # AMD (~$120)
+    "INTC",  # Intel (~$22) *** GUENSTIG
+    "MU",    # Micron (~$90)
+    "QCOM",  # Qualcomm (~$160)
+    "CRM",   # Salesforce (~$270)
+    "ORCL",  # Oracle (~$130)
+    "IBM",   # IBM (~$170)
+    "CSCO",  # Cisco (~$48)
+    "HPQ",   # HP (~$30) *** GUENSTIG
+    "DELL",  # Dell (~$85)
+
+    # === GUENSTIGE TECH/GROWTH (unter $50!) ===
+    "PLTR",  # Palantir (~$25) *** GUENSTIG
+    "SOFI",  # SoFi (~$12) *** SEHR GUENSTIG
+    "HOOD",  # Robinhood (~$20) *** GUENSTIG
+    "SNAP",  # Snap (~$11) *** SEHR GUENSTIG
+    "PINS",  # Pinterest (~$32) *** GUENSTIG
+    "ROKU",  # Roku (~$70)
+    "SPOT",  # Spotify (~$320)
+    "SQ",    # Block/Square (~$70)
+    "PYPL",  # PayPal (~$65)
+    "SHOP",  # Shopify (~$80)
+    "U",     # Unity (~$22) *** GUENSTIG
+    "RBLX",  # Roblox (~$45) *** GUENSTIG
+    "DKNG",  # DraftKings (~$35) *** GUENSTIG
+    "COIN",  # Coinbase (~$180)
+
+    # === EV/AUTO (oft guenstig) ===
+    "F",     # Ford (~$10) *** SEHR GUENSTIG
+    "GM",    # GM (~$45) *** GUENSTIG
+    "RIVN",  # Rivian (~$13) *** SEHR GUENSTIG
+    "LCID",  # Lucid (~$3) *** SEHR GUENSTIG
+    "NIO",   # NIO (~$5) *** SEHR GUENSTIG
+    "XPEV",  # XPeng (~$10) *** SEHR GUENSTIG
+    "LI",    # Li Auto (~$25) *** GUENSTIG
+
+    # === AIRLINES/TRAVEL (guenstig!) ===
+    "AAL",   # American Airlines (~$14) *** SEHR GUENSTIG
+    "DAL",   # Delta (~$50)
+    "UAL",   # United (~$75)
+    "LUV",   # Southwest (~$30) *** GUENSTIG
+    "CCL",   # Carnival (~$20) *** GUENSTIG
+    "RCL",   # Royal Caribbean (~$180)
+    "ABNB",  # Airbnb (~$130)
+    "BKNG",  # Booking (~$4000) - zu teuer
+    "UBER",  # Uber (~$65)
+    "LYFT",  # Lyft (~$13) *** SEHR GUENSTIG
+
+    # === RETAIL ===
+    "WMT",   # Walmart (~$165)
+    "TGT",   # Target (~$135)
+    "COST",  # Costco (~$750) - teuer
+    "HD",    # Home Depot (~$350)
+    "LOW",   # Lowes (~$230)
+    "NKE",   # Nike (~$75)
+    "LULU",  # Lululemon (~$330)
+    "GPS",   # Gap (~$22) *** GUENSTIG
+    "M",     # Macys (~$15) *** GUENSTIG
+    "KSS",   # Kohls (~$12) *** SEHR GUENSTIG
+
+    # === BANKEN/FINANCE ===
+    "JPM",   # JP Morgan (~$200)
+    "BAC",   # Bank of America (~$37) *** GUENSTIG
+    "WFC",   # Wells Fargo (~$55)
+    "C",     # Citigroup (~$60)
+    "GS",    # Goldman (~$480)
+    "MS",    # Morgan Stanley (~$95)
+    "SCHW",  # Schwab (~$65)
+    "V",     # Visa (~$280)
+    "MA",    # Mastercard (~$470)
+    "AXP",   # American Express (~$250)
+
+    # === HEALTHCARE/PHARMA ===
+    "JNJ",   # Johnson & Johnson (~$155)
+    "PFE",   # Pfizer (~$28) *** GUENSTIG
+    "MRK",   # Merck (~$105)
+    "ABBV",  # AbbVie (~$175)
+    "LLY",   # Eli Lilly (~$750) - teuer
+    "BMY",   # Bristol-Myers (~$55)
+    "MRNA",  # Moderna (~$40) *** GUENSTIG
+    "BNTX",  # BioNTech (~$110)
+
+    # === ENERGIE ===
+    "XOM",   # Exxon (~$110)
+    "CVX",   # Chevron (~$150)
+    "COP",   # ConocoPhillips (~$115)
+    "OXY",   # Occidental (~$55)
+    "SLB",   # Schlumberger (~$45) *** GUENSTIG
+    "HAL",   # Halliburton (~$35) *** GUENSTIG
+
+    # === MEDIA/ENTERTAINMENT ===
+    "DIS",   # Disney (~$95)
+    "NFLX",  # Netflix (~$550)
+    "WBD",   # Warner Bros (~$10) *** SEHR GUENSTIG
+    "PARA",  # Paramount (~$12) *** SEHR GUENSTIG
+    "CMCSA", # Comcast (~$42) *** GUENSTIG
+    "T",     # AT&T (~$18) *** SEHR GUENSTIG
+    "VZ",    # Verizon (~$40) *** GUENSTIG
+    "TMUS",  # T-Mobile (~$200)
+
+    # === INDUSTRIE ===
+    "BA",    # Boeing (~$175)
+    "CAT",   # Caterpillar (~$340)
+    "DE",    # Deere (~$420)
+    "GE",    # GE Aerospace (~$165)
+    "HON",   # Honeywell (~$200)
+    "UPS",   # UPS (~$130)
+    "FDX",   # FedEx (~$280)
+
+    # === FOOD/CONSUMER ===
+    "KO",    # Coca-Cola (~$62)
+    "PEP",   # Pepsi (~$155)
+    "MCD",   # McDonalds (~$290)
+    "SBUX",  # Starbucks (~$90)
+    "CMG",   # Chipotle (~$55)
+    "YUM",   # Yum Brands (~$135)
 ]
 
 
@@ -107,8 +220,13 @@ class ScreenerResult:
 class StockScreener:
     """Screent Aktien fuer Options-Strategien"""
 
-    def __init__(self, watchlist: List[str] = None):
+    def __init__(self, watchlist: List[str] = None, capital: int = 5000):
         self.watchlist = watchlist or DEFAULT_WATCHLIST
+        self.capital = capital
+        # Fuer Straddle: Max 10% vom Konto = bei $5000 max $500
+        # Straddle-Kosten ca. 3-5% vom Aktienkurs * 100
+        # Also: Aktie sollte max ~$100-150 kosten fuer Straddle
+        self.max_straddle_stock_price = (capital * 0.10) / 3  # Konservativ
 
     def screen_all(self) -> Dict[str, List[ScreenerResult]]:
         """
@@ -145,7 +263,8 @@ class StockScreener:
             # Primaere Entscheidung: Earnings?
             if r.has_earnings_soon:
                 # Earnings = Straddle Kandidat (NICHT Iron Condor!)
-                if r.straddle_score > 40:
+                # ABER: Nur wenn der Preis passt!
+                if r.straddle_score > 40 and r.current_price <= self.max_straddle_stock_price:
                     straddle_candidates.append(r)
             else:
                 # Keine Earnings - aber Expected Move pruefen!
@@ -154,7 +273,8 @@ class StockScreener:
                     iron_condor_candidates.append(r)
                 elif r.expected_move_pct >= 3.0:
                     # Hoher Expected Move OHNE Earnings = auch Straddle moeglich
-                    if r.straddle_score > 50:
+                    # ABER: Nur wenn der Preis passt!
+                    if r.straddle_score > 50 and r.current_price <= self.max_straddle_stock_price:
                         straddle_candidates.append(r)
 
         # Sortieren und Top 5

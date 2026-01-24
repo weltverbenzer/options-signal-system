@@ -47,8 +47,8 @@ class MarketSnapshot:
         Returns:
             Tuple[bool, str]: (geeignet, Grund falls nicht geeignet)
         """
-        if not self.is_trading_day:
-            return False, "Kein Handelstag"
+        # HINWEIS: Wir generieren auch am Wochenende Signale fuer den naechsten Handelstag!
+        # Die is_trading_day Pruefung wurde entfernt.
 
         if self.vix > max_vix:
             return False, f"VIX zu hoch ({self.vix:.1f} > {max_vix})"

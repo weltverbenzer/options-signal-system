@@ -131,17 +131,12 @@ def generate_straddle_details(symbol: str, current_price: float, capital: int = 
         breakeven_up = atm_call['strike'] + call_price + put_price
         breakeven_down = atm_put['strike'] - call_price - put_price
 
-        # MAX 10% DES KAPITALS!
-        max_allowed = capital * 0.10
+        # Risiko berechnen (bei Straddle = Gesamtkosten)
+        max_allowed = capital * 0.15  # Erhoehe auf 15% - Screener filtert vorher
         risk_pct = (total_cost / capital) * 100
 
-        if total_cost > max_allowed:
-            return {
-                'valid': False,
-                'reason': f'Zu teuer: ${total_cost:.0f} = {risk_pct:.0f}% vom Konto (max. 10% = ${max_allowed:.0f} erlaubt)',
-                'total_cost': total_cost,
-                'risk_pct': risk_pct
-            }
+        # Nur warnen, nicht blockieren (Screener filtert bereits nach Preis)
+        too_expensive = total_cost > max_allowed
 
         return {
             'valid': True,
@@ -154,7 +149,8 @@ def generate_straddle_details(symbol: str, current_price: float, capital: int = 
             'risk_pct': risk_pct,
             'breakeven_up': breakeven_up,
             'breakeven_down': breakeven_down,
-            'breakeven_move_pct': ((breakeven_up - current_price) / current_price) * 100
+            'breakeven_move_pct': ((breakeven_up - current_price) / current_price) * 100,
+            'warning': f'Hoeheres Risiko: {risk_pct:.0f}% vom Konto' if too_expensive else None
         }
 
     except Exception as e:
@@ -171,8 +167,9 @@ def run_screening(config: dict) -> dict:
     print("=" * 60)
 
     # 1. Screening
-    print("\n[1/3] Screene Watchlist...")
-    screener = StockScreener()
+    capital = config.get('account', {}).get('capital', 5000)
+    print(f"\n[1/3] Screene Watchlist (Kapital: ${capital})...")
+    screener = StockScreener(capital=capital)
     results = screener.screen_all()
 
     iron_condor_candidates = results['iron_condor']
