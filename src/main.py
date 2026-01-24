@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """
-Options Signal System - Hauptprogramm
-=====================================
-Fuehrt den taeglichen Scan durch und versendet Signale.
+Options Signal System - Hauptprogramm v2
+=========================================
+Screent Watchlist und liefert Kandidaten fuer:
+- Iron Condor (ruhige Aktien ohne Events)
+- Straddle/Strangle (Aktien mit Earnings/Events)
 
-Aufruf:
-    python main.py              # Normaler Durchlauf
-    python main.py --test       # Test-Modus (keine E-Mails)
-    python main.py --dry-run    # Zeigt Signal ohne Versand
+Mit Begruendungen und Liquiditaetspruefung.
 """
 
 import sys
@@ -18,65 +17,39 @@ from datetime import datetime
 
 import yaml
 
-# Pfad fuer lokale Imports
 sys.path.insert(0, str(Path(__file__).parent))
 
+from screener import StockScreener, ScreenerResult, DEFAULT_WATCHLIST
 from market_data import MarketDataFetcher
-from signal_generator import SignalGenerator
-from email_sender import EmailSender
+from signal_generator import SignalGenerator, IronCondorSignal
+from email_sender_v2 import EmailSenderV2
 from website_generator import WebsiteGenerator
 
 
 def load_config(config_path: str = None) -> dict:
-    """
-    Laedt die Konfiguration aus YAML-Datei.
-
-    Sucht in folgender Reihenfolge:
-    1. Angegebener Pfad
-    2. config.yaml im aktuellen Verzeichnis
-    3. config.yaml im Projekt-Root
-    4. Umgebungsvariablen
-
-    Args:
-        config_path: Optionaler Pfad zur Config-Datei
-
-    Returns:
-        Konfiguration als Dictionary
-    """
-    # Moegliche Config-Pfade
+    """Laedt Konfiguration aus Datei oder Umgebungsvariablen"""
     possible_paths = [
         config_path,
         'config.yaml',
         Path(__file__).parent.parent / 'config.yaml',
-        Path.home() / '.options-signal' / 'config.yaml'
     ]
 
     for path in possible_paths:
         if path and Path(path).exists():
-            print(f"Lade Konfiguration von: {path}")
             with open(path, 'r', encoding='utf-8') as f:
                 return yaml.safe_load(f)
 
     # Fallback: Umgebungsvariablen
-    print("Keine config.yaml gefunden, nutze Umgebungsvariablen...")
     return {
         'account': {
             'capital': int(os.getenv('CAPITAL', 5000)),
             'max_risk_percent': float(os.getenv('MAX_RISK_PERCENT', 2))
         },
-        'signal': {
-            'symbol': os.getenv('SYMBOL', 'SPY'),
-            'short_delta': float(os.getenv('SHORT_DELTA', 0.12)),
-            'wing_width': float(os.getenv('WING_WIDTH', 2)),
-            'min_vix': float(os.getenv('MIN_VIX', 12)),
-            'max_vix': float(os.getenv('MAX_VIX', 25)),
-            'min_iv_percentile': float(os.getenv('MIN_IV_PERCENTILE', 20))
-        },
         'email': {
-            'enabled': os.getenv('EMAIL_ENABLED', 'false').lower() == 'true',
+            'enabled': os.getenv('EMAIL_ENABLED', 'true').lower() == 'true',
             'recipient': os.getenv('EMAIL_RECIPIENT', ''),
             'smtp': {
-                'server': os.getenv('SMTP_SERVER', 'smtp.gmail.com'),
+                'server': os.getenv('SMTP_SERVER', ''),
                 'port': int(os.getenv('SMTP_PORT', 587)),
                 'username': os.getenv('SMTP_USERNAME', ''),
                 'password': os.getenv('SMTP_PASSWORD', '')
@@ -90,159 +63,207 @@ def load_config(config_path: str = None) -> dict:
     }
 
 
-def run_signal_generation(config: dict, dry_run: bool = False,
-                          test_mode: bool = False) -> bool:
-    """
-    Fuehrt die Signal-Generierung durch.
-
-    Args:
-        config: Konfiguration
-        dry_run: Wenn True, kein Versand
-        test_mode: Wenn True, nutze Test-Daten
-
-    Returns:
-        True wenn erfolgreich
-    """
-    print("=" * 60)
-    print("OPTIONS SIGNAL SYSTEM")
-    print(f"Zeitpunkt: {datetime.now().strftime('%d.%m.%Y %H:%M:%S')}")
-    print("=" * 60)
-    print()
-
+def generate_iron_condor_details(symbol: str, config: dict) -> dict:
+    """Generiert konkrete Iron Condor Details fuer ein Symbol"""
     try:
-        # 1. Marktdaten abrufen
-        print("[1/4] Rufe Marktdaten ab...")
-        symbol = config.get('signal', {}).get('symbol', 'SPY')
         fetcher = MarketDataFetcher(symbol)
         snapshot = fetcher.get_market_snapshot()
 
-        print(f"      {symbol}: ${snapshot.price:.2f}")
-        print(f"      VIX: {snapshot.vix:.2f}")
-        print(f"      IV Percentile: {snapshot.iv_percentile:.1f}%")
-        print(f"      Expected Move: {snapshot.expected_move:.2f}%")
-        print()
-
-        # 2. Signal generieren
-        print("[2/4] Generiere Signal...")
         generator = SignalGenerator(config)
         signal = generator.generate_signal(snapshot)
 
         if signal.is_valid:
-            print(f"      SIGNAL GEFUNDEN!")
-            print(f"      Short Put: ${signal.short_put_strike:.0f}")
-            print(f"      Short Call: ${signal.short_call_strike:.0f}")
-            print(f"      Net Credit: ${signal.net_credit:.2f}")
-            print(f"      Max Loss: ${signal.max_loss:.0f}")
-            print(f"      Risk Level: {signal.risk_level}")
+            return {
+                'valid': True,
+                'short_put': signal.short_put_strike,
+                'long_put': signal.long_put_strike,
+                'short_call': signal.short_call_strike,
+                'long_call': signal.long_call_strike,
+                'net_credit': signal.net_credit,
+                'max_profit': signal.max_profit,
+                'max_loss': signal.max_loss,
+                'contracts': signal.recommended_contracts,
+                'risk_pct': signal.risk_percent
+            }
         else:
-            print(f"      Kein Signal: {signal.rejection_reason}")
-        print()
-
-        if dry_run:
-            print("[DRY-RUN] Kein Versand, nur Anzeige")
-            print()
-            _print_signal_details(signal)
-            return True
-
-        # 3. E-Mail versenden
-        print("[3/4] Versende E-Mail...")
-        email_sender = EmailSender(config)
-        if email_sender.enabled:
-            success = email_sender.send_signal(signal)
-            print(f"      E-Mail: {'Gesendet' if success else 'Fehler'}")
-        else:
-            print("      E-Mail deaktiviert")
-        print()
-
-        # 4. Webseite generieren
-        print("[4/4] Generiere Webseite...")
-        website_gen = WebsiteGenerator(config)
-        if website_gen.enabled:
-            history = website_gen.load_history()
-            success = website_gen.generate(signal, history)
-            print(f"      Webseite: {'Generiert' if success else 'Fehler'}")
-        else:
-            print("      Webseite deaktiviert")
-        print()
-
-        print("=" * 60)
-        print("FERTIG!")
-        print("=" * 60)
-
-        return True
+            return {'valid': False, 'reason': signal.rejection_reason}
 
     except Exception as e:
-        print(f"\nFEHLER: {e}")
-        import traceback
-        traceback.print_exc()
-        return False
+        return {'valid': False, 'reason': str(e)}
 
 
-def _print_signal_details(signal):
-    """Gibt Signal-Details aus"""
-    if signal.is_valid:
-        print("-" * 40)
-        print("SIGNAL DETAILS")
-        print("-" * 40)
-        print(f"Symbol:         {signal.symbol}")
-        print(f"Verfall:        {signal.expiry}")
-        print()
-        print("Legs:")
-        print(f"  Short Put:    ${signal.short_put_strike:.0f} @ ${signal.short_put_premium:.2f}")
-        print(f"  Long Put:     ${signal.long_put_strike:.0f} @ ${signal.long_put_premium:.2f}")
-        print(f"  Short Call:   ${signal.short_call_strike:.0f} @ ${signal.short_call_premium:.2f}")
-        print(f"  Long Call:    ${signal.long_call_strike:.0f} @ ${signal.long_call_premium:.2f}")
-        print()
-        print(f"Net Credit:     ${signal.net_credit:.2f}")
-        print(f"Max Profit:     ${signal.max_profit:.0f}")
-        print(f"Max Loss:       ${signal.max_loss:.0f}")
-        print(f"Breakeven:      ${signal.breakeven_lower:.2f} - ${signal.breakeven_upper:.2f}")
-        print()
-        print(f"Empfehlung:     {signal.recommended_contracts} Contract(s)")
-        print(f"Risiko:         ${signal.total_risk:.0f} ({signal.risk_percent:.1f}%)")
-        print(f"Risk Level:     {signal.risk_level}")
-        print("-" * 40)
-    else:
-        print("-" * 40)
-        print("KEIN SIGNAL")
-        print(f"Grund: {signal.rejection_reason}")
-        print("-" * 40)
+def generate_straddle_details(symbol: str, current_price: float) -> dict:
+    """Generiert konkrete Straddle Details fuer ein Symbol"""
+    try:
+        import yfinance as yf
+        ticker = yf.Ticker(symbol)
+
+        expirations = ticker.options
+        if not expirations:
+            return {'valid': False, 'reason': 'Keine Optionen verfuegbar'}
+
+        # Naechstes Verfallsdatum (oder uebernaechstes fuer mehr Zeit)
+        expiry = expirations[0] if len(expirations) == 1 else expirations[1]
+
+        chain = ticker.option_chain(expiry)
+
+        # ATM Strike finden
+        atm_strike = round(current_price)
+
+        # Naechsten verfuegbaren Strike
+        call_strikes = chain.calls['strike'].values
+        put_strikes = chain.puts['strike'].values
+
+        atm_call_idx = abs(call_strikes - atm_strike).argmin()
+        atm_put_idx = abs(put_strikes - atm_strike).argmin()
+
+        atm_call = chain.calls.iloc[atm_call_idx]
+        atm_put = chain.puts.iloc[atm_put_idx]
+
+        call_price = (atm_call['bid'] + atm_call['ask']) / 2
+        put_price = (atm_put['bid'] + atm_put['ask']) / 2
+
+        total_cost = (call_price + put_price) * 100
+        breakeven_up = atm_call['strike'] + call_price + put_price
+        breakeven_down = atm_put['strike'] - call_price - put_price
+
+        return {
+            'valid': True,
+            'expiry': expiry,
+            'call_strike': atm_call['strike'],
+            'put_strike': atm_put['strike'],
+            'call_price': call_price,
+            'put_price': put_price,
+            'total_cost': total_cost,
+            'breakeven_up': breakeven_up,
+            'breakeven_down': breakeven_down,
+            'breakeven_move_pct': ((breakeven_up - current_price) / current_price) * 100
+        }
+
+    except Exception as e:
+        return {'valid': False, 'reason': str(e)}
+
+
+def run_screening(config: dict) -> dict:
+    """
+    Fuehrt das Screening durch und sammelt alle Ergebnisse.
+    """
+    print("=" * 60)
+    print("OPTIONS SIGNAL SYSTEM v2")
+    print(f"Zeitpunkt: {datetime.now().strftime('%d.%m.%Y %H:%M:%S')}")
+    print("=" * 60)
+
+    # 1. Screening
+    print("\n[1/3] Screene Watchlist...")
+    screener = StockScreener()
+    results = screener.screen_all()
+
+    iron_condor_candidates = results['iron_condor']
+    straddle_candidates = results['straddle']
+
+    print(f"\n  Iron Condor Kandidaten: {len(iron_condor_candidates)}")
+    print(f"  Straddle Kandidaten: {len(straddle_candidates)}")
+
+    # 2. Details fuer Top-Kandidaten generieren
+    print("\n[2/3] Generiere Trade-Details...")
+
+    ic_details = []
+    for candidate in iron_condor_candidates[:3]:
+        print(f"  Berechne Iron Condor fuer {candidate.symbol}...")
+        details = generate_iron_condor_details(candidate.symbol, config)
+        ic_details.append({
+            'candidate': candidate,
+            'details': details
+        })
+
+    st_details = []
+    for candidate in straddle_candidates[:3]:
+        print(f"  Berechne Straddle fuer {candidate.symbol}...")
+        details = generate_straddle_details(candidate.symbol, candidate.current_price)
+        st_details.append({
+            'candidate': candidate,
+            'details': details
+        })
+
+    return {
+        'iron_condor': ic_details,
+        'straddle': st_details,
+        'generated_at': datetime.now()
+    }
 
 
 def main():
-    """Haupteinstiegspunkt"""
-    parser = argparse.ArgumentParser(
-        description='Options Signal System - 0DTE Iron Condor Signale'
-    )
-    parser.add_argument(
-        '--config', '-c',
-        help='Pfad zur Konfigurationsdatei'
-    )
-    parser.add_argument(
-        '--dry-run', '-d',
-        action='store_true',
-        help='Signal generieren ohne zu versenden'
-    )
-    parser.add_argument(
-        '--test', '-t',
-        action='store_true',
-        help='Test-Modus'
-    )
+    parser = argparse.ArgumentParser(description='Options Signal System v2')
+    parser.add_argument('--config', '-c', help='Pfad zur Konfigurationsdatei')
+    parser.add_argument('--dry-run', '-d', action='store_true', help='Nur anzeigen')
 
     args = parser.parse_args()
-
-    # Konfiguration laden
     config = load_config(args.config)
 
-    # Signal generieren
-    success = run_signal_generation(
-        config,
-        dry_run=args.dry_run,
-        test_mode=args.test
-    )
+    # Screening durchfuehren
+    results = run_screening(config)
 
-    sys.exit(0 if success else 1)
+    # Ausgabe
+    print("\n" + "=" * 60)
+    print("IRON CONDOR KANDIDATEN")
+    print("(Ruhige Aktien ohne Events - Seitwaertsbewegung erwartet)")
+    print("=" * 60)
+
+    for item in results['iron_condor']:
+        c = item['candidate']
+        d = item['details']
+        print(f"\n{c.symbol} ({c.company_name})")
+        print(f"  Kurs: ${c.current_price:.2f} | Score: {c.iron_condor_score:.0f}/100")
+        print(f"  Gruende: {', '.join(c.reasons)}")
+        if d['valid']:
+            print(f"  Trade: Sell {d['short_put']}/{d['short_call']} | Buy {d['long_put']}/{d['long_call']}")
+            print(f"  Credit: ${d['net_credit']:.2f} | Max Loss: ${d['max_loss']:.0f}")
+        else:
+            print(f"  Trade nicht moeglich: {d.get('reason', 'Unbekannt')}")
+        if c.warnings:
+            print(f"  Warnungen: {', '.join(c.warnings)}")
+
+    print("\n" + "=" * 60)
+    print("STRADDLE KANDIDATEN")
+    print("(Aktien mit Earnings/Events - Grosse Bewegung erwartet)")
+    print("=" * 60)
+
+    for item in results['straddle']:
+        c = item['candidate']
+        d = item['details']
+        print(f"\n{c.symbol} ({c.company_name})")
+        print(f"  Kurs: ${c.current_price:.2f} | Score: {c.straddle_score:.0f}/100")
+        if c.earnings_date:
+            print(f"  Earnings: {c.earnings_date} (in {c.days_to_earnings} Tagen)")
+        print(f"  Gruende: {', '.join(c.reasons)}")
+        if d['valid']:
+            print(f"  Trade: Buy {d['call_strike']}C + {d['put_strike']}P ({d['expiry']})")
+            print(f"  Kosten: ${d['total_cost']:.0f} | Breakeven: +/-{d['breakeven_move_pct']:.1f}%")
+        else:
+            print(f"  Trade nicht moeglich: {d.get('reason', 'Unbekannt')}")
+        if c.warnings:
+            print(f"  Warnungen: {', '.join(c.warnings)}")
+
+    if args.dry_run:
+        print("\n[DRY-RUN] Kein E-Mail-Versand")
+        return True
+
+    # E-Mail senden
+    print("\n[3/3] Sende E-Mail...")
+    email_sender = EmailSenderV2(config)
+    if email_sender.enabled:
+        success = email_sender.send_candidates(results)
+        print(f"  E-Mail: {'Gesendet' if success else 'Fehler'}")
+    else:
+        print("  E-Mail deaktiviert")
+
+    print("\n" + "=" * 60)
+    print("FERTIG!")
+    print("=" * 60)
+
+    return True
 
 
 if __name__ == '__main__':
-    main()
+    success = main()
+    sys.exit(0 if success else 1)
