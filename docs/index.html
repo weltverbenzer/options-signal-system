@@ -5,104 +5,375 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Options Signal System</title>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             color: #eaeaea;
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             padding: 20px;
         }
-
-        .container {
-            max-width: 600px;
+        .container { max-width: 900px; margin: 0 auto; }
+        header {
             text-align: center;
+            padding: 30px 0;
+            border-bottom: 2px solid #e94560;
+            margin-bottom: 30px;
         }
-
-        h1 {
+        header h1 { color: #e94560; font-size: 2rem; margin-bottom: 10px; }
+        header .date { color: #888; font-size: 0.9rem; }
+        .section { margin-bottom: 40px; }
+        .section h2 {
             color: #e94560;
-            font-size: 2.5rem;
-            margin-bottom: 20px;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
         }
-
-        .status {
+        .section .subtitle { color: #888; font-size: 0.9rem; margin-bottom: 20px; }
+        .card {
             background: #16213e;
             border-radius: 15px;
-            padding: 40px;
-            margin: 30px 0;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #28a745;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
         }
-
-        .status h2 {
-            color: #ffc107;
+        .card.warning { border-left-color: #ffc107; }
+        .card.invalid { border-left-color: #dc3545; opacity: 0.7; }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
             margin-bottom: 15px;
         }
-
-        .status p {
-            color: #888;
-            line-height: 1.6;
-        }
-
-        .info-box {
+        .symbol { font-size: 1.8rem; font-weight: bold; color: #fff; }
+        .company { color: #888; font-size: 0.9rem; margin-top: 5px; }
+        .score {
             background: #0f3460;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            color: #fff;
+        }
+        .price { color: #28a745; font-size: 1.3rem; margin-bottom: 15px; }
+        .earnings-badge {
+            background: #e94560;
+            color: #fff;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            margin-left: 10px;
+        }
+        .reasons {
+            background: #0f3460;
+            padding: 15px;
             border-radius: 10px;
+            margin-bottom: 15px;
+        }
+        .reasons-label {
+            color: #e94560;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+        .trade-details {
+            background: #0a1628;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+        .trade-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #16213e;
+        }
+        .trade-row:last-child { border-bottom: none; }
+        .trade-row .value { font-weight: bold; }
+        .profit { color: #28a745; }
+        .loss { color: #dc3545; }
+        .warning-text { color: #ffc107; }
+        .warning-box {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid #ffc107;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            color: #ffc107;
+            font-size: 0.85rem;
+        }
+        .sources {
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px solid #333;
+            font-size: 0.85rem;
+        }
+        .sources a { color: #4dabf7; text-decoration: none; margin-right: 15px; }
+        .sources a:hover { text-decoration: underline; }
+        .no-candidates {
+            background: #16213e;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            color: #888;
+        }
+        .disclaimer {
+            background: #2a2a4a;
             padding: 20px;
-            margin-top: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-top: 30px;
         }
-
-        .info-box h3 {
-            color: #28a745;
-            margin-bottom: 10px;
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+            font-size: 0.8rem;
         }
-
-        .info-box ul {
-            text-align: left;
-            list-style: none;
-            color: #aaa;
-        }
-
-        .info-box li {
-            padding: 5px 0;
-        }
-
-        .info-box li::before {
-            content: "✓ ";
-            color: #28a745;
+        @media (max-width: 600px) {
+            .card-header { flex-direction: column; }
+            .score { margin-top: 10px; }
+            .symbol { font-size: 1.4rem; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Options Signal System</h1>
+        <header>
+            <h1>Options Signal System</h1>
+            <p class="date">25. January 2026 - 09:02 Uhr</p>
+        </header>
 
-        <div class="status">
-            <h2>System wird eingerichtet</h2>
-            <p>
-                Sobald das System aktiviert ist, werden hier taeglich
-                Iron Condor Signale fuer SPY angezeigt.
-            </p>
+        <div class="section">
+            <h2>Iron Condor Kandidaten</h2>
+            <p class="subtitle">Ruhige Aktien ohne Events - Seitwaertsbewegung erwartet</p>
+            
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <span class="symbol">QQQ</span>
+                    
+                    <div class="company">Invesco QQQ Trust, Series 1</div>
+                </div>
+                <div class="score">Score: 85/100</div>
+            </div>
+            <div class="price">$622.72</div>
+            <div class="reasons">
+                <div class="reasons-label">Warum dieser Kandidat?</div>
+                Keine Earnings in Sicht, Niedrige IV (27%) - guenstiger Straddle-Einstieg, Niedriger Expected Move (0.8%) - ideal fuer Iron Condor
+            </div>
+            
+            <div class="trade-details">
+                <div class="trade-row"><span>Sell Put</span><span class="value">$613</span></div>
+                <div class="trade-row"><span>Buy Put</span><span class="value">$611</span></div>
+                <div class="trade-row"><span>Sell Call</span><span class="value">$632</span></div>
+                <div class="trade-row"><span>Buy Call</span><span class="value">$634</span></div>
+                <div class="trade-row" style="margin-top:10px; border-top:1px solid #333; padding-top:10px;">
+                    <span>Net Credit</span><span class="value profit">$0.18</span>
+                </div>
+                <div class="trade-row"><span>Max Loss</span><span class="value loss">$182</span></div>
+            </div>
+            
+            
+        <div class="sources">
+            <strong>Quellen:</strong>
+            <a href="https://finance.yahoo.com/quote/QQQ" target="_blank">Kurs</a>
+            <a href="https://finance.yahoo.com/quote/QQQ/options" target="_blank">Optionen</a>
+            
+        </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <span class="symbol">IWM</span>
+                    
+                    <div class="company">iShares Russell 2000 ETF</div>
+                </div>
+                <div class="score">Score: 85/100</div>
+            </div>
+            <div class="price">$264.81</div>
+            <div class="reasons">
+                <div class="reasons-label">Warum dieser Kandidat?</div>
+                Keine Earnings in Sicht, Niedriger Expected Move (1.0%) - ideal fuer Iron Condor
+            </div>
+            
+            <div class="trade-details">
+                <div class="trade-row"><span>Sell Put</span><span class="value">$261</span></div>
+                <div class="trade-row"><span>Buy Put</span><span class="value">$259</span></div>
+                <div class="trade-row"><span>Sell Call</span><span class="value">$269</span></div>
+                <div class="trade-row"><span>Buy Call</span><span class="value">$271</span></div>
+                <div class="trade-row" style="margin-top:10px; border-top:1px solid #333; padding-top:10px;">
+                    <span>Net Credit</span><span class="value profit">$0.30</span>
+                </div>
+                <div class="trade-row"><span>Max Loss</span><span class="value loss">$170</span></div>
+            </div>
+            
+            
+        <div class="sources">
+            <strong>Quellen:</strong>
+            <a href="https://finance.yahoo.com/quote/IWM" target="_blank">Kurs</a>
+            <a href="https://finance.yahoo.com/quote/IWM/options" target="_blank">Optionen</a>
+            
+        </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <span class="symbol">GLD</span>
+                    
+                    <div class="company">SPDR Gold Shares</div>
+                </div>
+                <div class="score">Score: 70/100</div>
+            </div>
+            <div class="price">$458.00</div>
+            <div class="reasons">
+                <div class="reasons-label">Warum dieser Kandidat?</div>
+                Keine Earnings in Sicht
+            </div>
+            
+            <div class="trade-details">
+                <div class="trade-row"><span>Sell Put</span><span class="value">$450</span></div>
+                <div class="trade-row"><span>Buy Put</span><span class="value">$445</span></div>
+                <div class="trade-row"><span>Sell Call</span><span class="value">$465</span></div>
+                <div class="trade-row"><span>Buy Call</span><span class="value">$470</span></div>
+                <div class="trade-row" style="margin-top:10px; border-top:1px solid #333; padding-top:10px;">
+                    <span>Net Credit</span><span class="value profit">$1.53</span>
+                </div>
+                <div class="trade-row"><span>Max Loss</span><span class="value loss">$347</span></div>
+            </div>
+            
+            
+        <div class="sources">
+            <strong>Quellen:</strong>
+            <a href="https://finance.yahoo.com/quote/GLD" target="_blank">Kurs</a>
+            <a href="https://finance.yahoo.com/quote/GLD/options" target="_blank">Optionen</a>
+            
+        </div>
+        </div>
         </div>
 
-        <div class="info-box">
-            <h3>Naechste Schritte</h3>
-            <ul>
-                <li>GitHub Secrets konfigurieren</li>
-                <li>GitHub Actions aktivieren</li>
-                <li>GitHub Pages einrichten</li>
-                <li>Ersten Workflow-Run ausloesen</li>
-            </ul>
+        <div class="section">
+            <h2>Straddle Kandidaten</h2>
+            <p class="subtitle">Aktien mit Earnings/Events - Grosse Bewegung erwartet</p>
+            
+        <div class="card warning">
+            <div class="card-header">
+                <div>
+                    <span class="symbol">SLV</span>
+                    
+                    <div class="company">iShares Silver Trust</div>
+                </div>
+                <div class="score">Score: 90/100</div>
+            </div>
+            <div class="price">$92.91</div>
+            <div class="reasons">
+                <div class="reasons-label">Warum dieser Kandidat?</div>
+                Keine Earnings in Sicht, Hohe IV (100%) mit hohem Expected Move - Vorsicht!, HOHER Expected Move (4.4%) - NUR Straddle!
+            </div>
+            
+            <div class="trade-details">
+                <div class="trade-row"><span>Buy Call</span><span class="value">$93 @ $3.42</span></div>
+                <div class="trade-row"><span>Buy Put</span><span class="value">$92 @ $3.04</span></div>
+                <div class="trade-row"><span>Verfall</span><span class="value">2026-01-28</span></div>
+                <div class="trade-row" style="margin-top:10px; border-top:1px solid #333; padding-top:10px;">
+                    <span>Gesamtkosten</span><span class="value warning-text">$647</span>
+                </div>
+                <div class="trade-row"><span>Risiko</span><span class="value">12.9% vom Konto</span></div>
+                <div class="trade-row"><span>Breakeven</span><span class="value">+/-7.1%</span></div>
+            </div>
+            
+            <div class="warning-box">Breiter Bid-Ask Spread (11.1%)</div>
+            
+        <div class="sources">
+            <strong>Quellen:</strong>
+            <a href="https://finance.yahoo.com/quote/SLV" target="_blank">Kurs</a>
+            <a href="https://finance.yahoo.com/quote/SLV/options" target="_blank">Optionen</a>
+            
+        </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <span class="symbol">INTC</span>
+                    
+                    <div class="company">Intel Corporation</div>
+                </div>
+                <div class="score">Score: 90/100</div>
+            </div>
+            <div class="price">$45.07</div>
+            <div class="reasons">
+                <div class="reasons-label">Warum dieser Kandidat?</div>
+                Keine Earnings in Sicht, Hohe IV (100%) mit hohem Expected Move - Vorsicht!, HOHER Expected Move (6.7%) - NUR Straddle!
+            </div>
+            
+            <div class="trade-details">
+                <div class="trade-row"><span>Buy Call</span><span class="value">$45 @ $2.08</span></div>
+                <div class="trade-row"><span>Buy Put</span><span class="value">$45 @ $1.96</span></div>
+                <div class="trade-row"><span>Verfall</span><span class="value">2026-02-06</span></div>
+                <div class="trade-row" style="margin-top:10px; border-top:1px solid #333; padding-top:10px;">
+                    <span>Gesamtkosten</span><span class="value warning-text">$404</span>
+                </div>
+                <div class="trade-row"><span>Risiko</span><span class="value">8.1% vom Konto</span></div>
+                <div class="trade-row"><span>Breakeven</span><span class="value">+/-8.8%</span></div>
+            </div>
+            
+            
+            
+        <div class="sources">
+            <strong>Quellen:</strong>
+            <a href="https://finance.yahoo.com/quote/INTC" target="_blank">Kurs</a>
+            <a href="https://finance.yahoo.com/quote/INTC/options" target="_blank">Optionen</a>
+            
+        </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <span class="symbol">SOFI</span>
+                    
+                    <div class="company">SoFi Technologies, Inc.</div>
+                </div>
+                <div class="score">Score: 90/100</div>
+            </div>
+            <div class="price">$25.85</div>
+            <div class="reasons">
+                <div class="reasons-label">Warum dieser Kandidat?</div>
+                Keine Earnings in Sicht, Hohe IV (100%) mit hohem Expected Move - Vorsicht!, HOHER Expected Move (8.7%) - NUR Straddle!
+            </div>
+            
+            <div class="trade-details">
+                <div class="trade-row"><span>Buy Call</span><span class="value">$26 @ $1.35</span></div>
+                <div class="trade-row"><span>Buy Put</span><span class="value">$26 @ $1.44</span></div>
+                <div class="trade-row"><span>Verfall</span><span class="value">2026-02-06</span></div>
+                <div class="trade-row" style="margin-top:10px; border-top:1px solid #333; padding-top:10px;">
+                    <span>Gesamtkosten</span><span class="value warning-text">$279</span>
+                </div>
+                <div class="trade-row"><span>Risiko</span><span class="value">5.6% vom Konto</span></div>
+                <div class="trade-row"><span>Breakeven</span><span class="value">+/-11.4%</span></div>
+            </div>
+            
+            
+            
+        <div class="sources">
+            <strong>Quellen:</strong>
+            <a href="https://finance.yahoo.com/quote/SOFI" target="_blank">Kurs</a>
+            <a href="https://finance.yahoo.com/quote/SOFI/options" target="_blank">Optionen</a>
+            
+        </div>
+        </div>
         </div>
 
-        <p style="margin-top: 30px; color: #666; font-size: 0.85rem;">
-            Options Signal System | Automatisierte 0DTE Iron Condor Signale
-        </p>
+        <div class="disclaimer">
+            <strong>WICHTIG:</strong> Dies sind Vorschlaege zur Auswahl - DU entscheidest!<br>
+            Pruefe Bid/Ask Spreads vor dem Trade. Nicht alle Optionen sind immer handelbar.
+        </div>
+
+        <footer>
+            <p>Zuletzt aktualisiert: 25.01.2026 09:02 MEZ</p>
+            <p style="margin-top: 10px;">Options Signal System v2 | Automatisch generiert</p>
+        </footer>
     </div>
 </body>
 </html>
