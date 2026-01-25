@@ -30,6 +30,8 @@ jobs:
   generate-signal:
     name: Generate Daily Signal
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout Repository
@@ -59,14 +61,18 @@ jobs:
 
       - name: Commit and Push Website
         run: |
+          echo "=== Checking docs folder ==="
+          ls -la docs/ || echo "docs/ not found"
+          echo "=== Git status ==="
+          git status
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          if [ -n "$(git status docs --porcelain)" ]; then
-            git add docs/
+          git add docs/ || true
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
             git commit -m "Update signal: $(date +'%Y-%m-%d %H:%M')"
             git push
-          else
-            echo "No changes in docs/"
           fi
 
       - name: Upload Signal Output
