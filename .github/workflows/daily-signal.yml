@@ -2,6 +2,11 @@ name: Daily Signal Generation
 
 on:
   workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - 'src/**'
+      - '.github/workflows/**'
   schedule:
     - cron: '0 14 * * 1-5'
 
