@@ -268,8 +268,8 @@ class StockScreener:
             if not r.options_liquid:
                 continue  # Keine illiquiden Optionen
 
-            # STRADDLE: NUR für Aktien MIT Earnings in 0-5 Tagen!
-            if r.has_earnings_soon and r.days_to_earnings is not None and 0 <= r.days_to_earnings <= 5:
+            # STRADDLE: NUR für Aktien MIT Earnings in 0-7 Tagen!
+            if r.has_earnings_soon and r.days_to_earnings is not None and 0 <= r.days_to_earnings <= 7:
                 if r.straddle_score > 40 and r.current_price <= self.max_straddle_stock_price:
                     straddle_candidates.append(r)
 
@@ -321,6 +321,10 @@ class StockScreener:
 
         # Earnings pruefen
         earnings_info = self._check_earnings(ticker)
+
+        # Debug: Earnings-Info ausgeben wenn vorhanden
+        if earnings_info.get('earnings_date'):
+            print(f"    -> Earnings: {earnings_info['earnings_date']} (in {earnings_info['days_to_earnings']} Tagen)")
 
         # IV und Expected Move
         iv_info = self._get_iv_info(ticker, current_price)
@@ -374,42 +378,82 @@ class StockScreener:
         )
 
     def _check_earnings(self, ticker) -> Dict:
-        """Prueft Earnings-Termine"""
+        """Prueft Earnings-Termine mit mehreren Methoden"""
         result = {
             'has_earnings_soon': False,
             'earnings_date': None,
             'days_to_earnings': None
         }
 
+        earnings_date = None
+
+        # Methode 1: ticker.info (am zuverlässigsten)
         try:
-            # Earnings-Kalender abrufen
-            calendar = ticker.calendar
-
-            if calendar is not None and not calendar.empty:
-                # Verschiedene Formate behandeln
-                if isinstance(calendar, pd.DataFrame):
-                    if 'Earnings Date' in calendar.columns:
-                        earnings_date = calendar['Earnings Date'].iloc[0]
-                    elif 'earningsDate' in calendar.index:
-                        earnings_date = calendar.loc['earningsDate'].iloc[0]
+            info = ticker.info
+            if info and 'earningsDate' in info:
+                # info['earningsDate'] kann ein Timestamp oder None sein
+                ed = info['earningsDate']
+                if ed:
+                    # Manchmal ist es ein Timestamp, manchmal ein String
+                    if isinstance(ed, (int, float)):
+                        earnings_date = datetime.fromtimestamp(ed)
+                    elif isinstance(ed, str):
+                        earnings_date = pd.to_datetime(ed)
                     else:
-                        earnings_date = None
-                else:
-                    earnings_date = calendar.get('Earnings Date', [None])[0]
-
-                if earnings_date:
-                    if isinstance(earnings_date, str):
-                        earnings_date = pd.to_datetime(earnings_date)
-
-                    today = datetime.now().date()
-                    days_to = (earnings_date.date() - today).days if hasattr(earnings_date, 'date') else 999
-
-                    result['earnings_date'] = str(earnings_date.date()) if hasattr(earnings_date, 'date') else str(earnings_date)
-                    result['days_to_earnings'] = days_to
-                    result['has_earnings_soon'] = -1 <= days_to <= 3  # Gestern bis in 3 Tagen
-
+                        earnings_date = ed
         except Exception as e:
             pass
+
+        # Methode 2: ticker.calendar (Fallback)
+        if not earnings_date:
+            try:
+                calendar = ticker.calendar
+                if calendar is not None and not calendar.empty:
+                    if isinstance(calendar, pd.DataFrame):
+                        if 'Earnings Date' in calendar.columns:
+                            earnings_date = calendar['Earnings Date'].iloc[0]
+                        elif 'earningsDate' in calendar.index:
+                            earnings_date = calendar.loc['earningsDate'].iloc[0]
+                    else:
+                        ed = calendar.get('Earnings Date', [None])
+                        if ed and len(ed) > 0:
+                            earnings_date = ed[0]
+            except Exception as e:
+                pass
+
+        # Methode 3: ticker.earnings_dates (letzter Versuch)
+        if not earnings_date:
+            try:
+                earnings_dates = ticker.earnings_dates
+                if earnings_dates is not None and not earnings_dates.empty:
+                    # Nimm das nächste zukünftige Datum
+                    future_dates = earnings_dates[earnings_dates.index >= pd.Timestamp.now()]
+                    if not future_dates.empty:
+                        earnings_date = future_dates.index[0]
+            except Exception as e:
+                pass
+
+        # Datum verarbeiten
+        if earnings_date:
+            try:
+                if isinstance(earnings_date, str):
+                    earnings_date = pd.to_datetime(earnings_date)
+
+                today = datetime.now().date()
+                if hasattr(earnings_date, 'date'):
+                    earnings_date_only = earnings_date.date()
+                else:
+                    earnings_date_only = earnings_date
+
+                days_to = (earnings_date_only - today).days
+
+                result['earnings_date'] = str(earnings_date_only)
+                result['days_to_earnings'] = days_to
+                # Erweitert auf 7 Tage für bessere Auswahl
+                result['has_earnings_soon'] = -1 <= days_to <= 7
+
+            except Exception as e:
+                pass
 
         return result
 
