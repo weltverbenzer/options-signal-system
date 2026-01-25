@@ -27,11 +27,14 @@ class WebsiteGenerator:
         """
         website_config = config.get('website', {})
         self.enabled = website_config.get('enabled', False)
-        self.output_dir = website_config.get('output_dir', 'docs')
         self.title = website_config.get('title', 'Options Signal System')
 
+        # Output-Verzeichnis relativ zum Projekt-Root (nicht src/)
+        project_root = Path(__file__).parent.parent
+        self.output_dir = project_root / website_config.get('output_dir', 'docs')
+
         # Stelle sicher dass Output-Verzeichnis existiert
-        Path(self.output_dir).mkdir(parents=True, exist_ok=True)
+        self.output_dir.mkdir(parents=True, exist_ok=True)
 
     def generate_v2(self, results: Dict) -> bool:
         """
