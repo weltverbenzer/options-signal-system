@@ -412,6 +412,9 @@ class EmailSenderV2:
 
         score = c.iron_condor_score if strategy == "iron_condor" else c.straddle_score
 
+        # Detail-Link zur Website
+        detail_url = f"https://weltverbenzer.github.io/options-signal-system/{c.symbol.lower()}.html"
+
         # Quellen-Links
         sources_html = f"""
         <div class="sources">
@@ -439,6 +442,9 @@ class EmailSenderV2:
             </div>
             {trade_html}
             {warnings_html}
+            <a href="{detail_url}" target="_blank" style="display:inline-block; margin-top:15px; padding:10px 20px; background:#e94560; color:#fff; text-decoration:none; border-radius:5px; font-weight:bold;">
+                Details, News & Chart anzeigen
+            </a>
             {sources_html}
         </div>
         """

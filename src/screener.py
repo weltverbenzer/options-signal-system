@@ -194,6 +194,13 @@ class ScreenerResult:
     source_url_options: str = ""    # Yahoo Finance Options
     source_url_earnings: str = ""   # Earnings Kalender
 
+    # News (Liste von Dicts mit 'title', 'summary', 'link', 'published')
+    news: List[Dict] = None
+
+    def __post_init__(self):
+        if self.news is None:
+            self.news = []
+
     def to_dict(self) -> dict:
         return {
             'symbol': self.symbol,
@@ -213,7 +220,8 @@ class ScreenerResult:
             'bid_ask_spread_pct': self.bid_ask_spread_pct,
             'source_url_quote': self.source_url_quote,
             'source_url_options': self.source_url_options,
-            'source_url_earnings': self.source_url_earnings
+            'source_url_earnings': self.source_url_earnings,
+            'news': self.news
         }
 
 
@@ -345,6 +353,9 @@ class StockScreener:
         source_options = f"https://finance.yahoo.com/quote/{symbol}/options"
         source_earnings = f"https://finance.yahoo.com/quote/{symbol}/analysis"
 
+        # News abrufen
+        news = self._get_news(ticker)
+
         return ScreenerResult(
             symbol=symbol,
             company_name=company_name,
@@ -365,7 +376,8 @@ class StockScreener:
             bid_ask_spread_pct=liquidity_info.get('spread_pct', 0),
             source_url_quote=source_quote,
             source_url_options=source_options,
-            source_url_earnings=source_earnings
+            source_url_earnings=source_earnings,
+            news=news
         )
 
     def _check_earnings(self, ticker) -> Dict:
@@ -505,6 +517,31 @@ class StockScreener:
             pass
 
         return result
+
+    def _get_news(self, ticker) -> List[Dict]:
+        """
+        Ruft aktuelle News fuer das Symbol ab.
+
+        Returns:
+            Liste von News-Dicts mit 'title', 'summary', 'link', 'published'
+        """
+        news_list = []
+
+        try:
+            news = ticker.news
+            if news:
+                for item in news[:5]:  # Max 5 News
+                    news_list.append({
+                        'title': item.get('title', ''),
+                        'summary': item.get('summary', '')[:200] + '...' if len(item.get('summary', '')) > 200 else item.get('summary', ''),
+                        'link': item.get('link', ''),
+                        'published': item.get('providerPublishTime', 0),
+                        'source': item.get('publisher', '')
+                    })
+        except Exception as e:
+            pass
+
+        return news_list
 
     def _calculate_scores(self, earnings: Dict, iv: Dict,
                           liquidity: Dict, avg_volume: int) -> Tuple[float, float, List[str], List[str]]:
