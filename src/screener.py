@@ -264,14 +264,29 @@ class StockScreener:
         iron_condor_candidates = []
         straddle_candidates = []
 
+        # Debug: Earnings-Statistik
+        earnings_count = sum(1 for r in results if r.has_earnings_soon)
+        print(f"\n=== EARNINGS-STATISTIK ===")
+        print(f"Aktien MIT Earnings (nächste 7 Tage): {earnings_count}")
+        for r in results:
+            if r.has_earnings_soon and r.earnings_date:
+                print(f"  {r.symbol}: {r.earnings_date} (in {r.days_to_earnings}T, Preis: ${r.current_price:.0f}, Score: {r.straddle_score:.0f})")
+
         for r in results:
             if not r.options_liquid:
                 continue  # Keine illiquiden Optionen
 
             # STRADDLE: NUR für Aktien MIT Earnings in 0-7 Tagen!
             if r.has_earnings_soon and r.days_to_earnings is not None and 0 <= r.days_to_earnings <= 7:
+                print(f"\n  Prüfe {r.symbol} für Straddle: Score={r.straddle_score:.0f}, Preis=${r.current_price:.0f}, Max=${self.max_straddle_stock_price:.0f}")
                 if r.straddle_score > 40 and r.current_price <= self.max_straddle_stock_price:
+                    print(f"  -> {r.symbol} als Straddle akzeptiert!")
                     straddle_candidates.append(r)
+                else:
+                    if r.straddle_score <= 40:
+                        print(f"  -> {r.symbol} abgelehnt: Score zu niedrig ({r.straddle_score:.0f} <= 40)")
+                    if r.current_price > self.max_straddle_stock_price:
+                        print(f"  -> {r.symbol} abgelehnt: Zu teuer (${r.current_price:.0f} > ${self.max_straddle_stock_price:.0f})")
 
             # IRON CONDOR: Keine Earnings UND niedriger Expected Move
             elif not r.has_earnings_soon and r.expected_move_pct < 2.0:
