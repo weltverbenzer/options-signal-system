@@ -2,7 +2,7 @@
 """
 Options Signal System - Hauptprogramm v2
 =========================================
-Screent Watchlist und liefert Kandidaten fuer:
+Screent Watchlist und liefert Kandidaten für:
 - Iron Condor (ruhige Aktien ohne Events)
 - Straddle/Strangle (Aktien mit Earnings/Events)
 
@@ -64,7 +64,7 @@ def load_config(config_path: str = None) -> dict:
 
 
 def generate_iron_condor_details(symbol: str, config: dict) -> dict:
-    """Generiert konkrete Iron Condor Details fuer ein Symbol"""
+    """Generiert konkrete Iron Condor Details für ein Symbol"""
     try:
         fetcher = MarketDataFetcher(symbol)
         snapshot = fetcher.get_market_snapshot()
@@ -94,7 +94,7 @@ def generate_iron_condor_details(symbol: str, config: dict) -> dict:
 
 def generate_straddle_details(symbol: str, current_price: float, capital: int = 5000) -> dict:
     """
-    Generiert konkrete Straddle Details fuer ein Symbol.
+    Generiert konkrete Straddle Details für ein Symbol.
 
     WICHTIG: Begrenzt Kosten auf max. 10% des Kapitals!
     """
@@ -104,9 +104,9 @@ def generate_straddle_details(symbol: str, current_price: float, capital: int = 
 
         expirations = ticker.options
         if not expirations:
-            return {'valid': False, 'reason': 'Keine Optionen verfuegbar'}
+            return {'valid': False, 'reason': 'Keine Optionen verfügbar'}
 
-        # Naechstes Verfallsdatum (oder uebernaechstes fuer mehr Zeit)
+        # Nächstes Verfallsdatum (oder übernächstes für mehr Zeit)
         expiry = expirations[0] if len(expirations) == 1 else expirations[1]
 
         chain = ticker.option_chain(expiry)
@@ -114,7 +114,7 @@ def generate_straddle_details(symbol: str, current_price: float, capital: int = 
         # ATM Strike finden
         atm_strike = round(current_price)
 
-        # Naechsten verfuegbaren Strike
+        # Nächsten verfügbaren Strike
         call_strikes = chain.calls['strike'].values
         put_strikes = chain.puts['strike'].values
 
@@ -150,7 +150,7 @@ def generate_straddle_details(symbol: str, current_price: float, capital: int = 
             'breakeven_up': breakeven_up,
             'breakeven_down': breakeven_down,
             'breakeven_move_pct': ((breakeven_up - current_price) / current_price) * 100,
-            'warning': f'Hoeheres Risiko: {risk_pct:.0f}% vom Konto' if too_expensive else None
+            'warning': f'Höheres Risiko: {risk_pct:.0f}% vom Konto' if too_expensive else None
         }
 
     except Exception as e:
@@ -178,12 +178,12 @@ def run_screening(config: dict) -> dict:
     print(f"\n  Iron Condor Kandidaten: {len(iron_condor_candidates)}")
     print(f"  Straddle Kandidaten: {len(straddle_candidates)}")
 
-    # 2. Details fuer Top-Kandidaten generieren
+    # 2. Details für Top-Kandidaten generieren
     print("\n[2/3] Generiere Trade-Details...")
 
     ic_details = []
     for candidate in iron_condor_candidates[:3]:
-        print(f"  Berechne Iron Condor fuer {candidate.symbol}...")
+        print(f"  Berechne Iron Condor für {candidate.symbol}...")
         details = generate_iron_condor_details(candidate.symbol, config)
         ic_details.append({
             'candidate': candidate,
@@ -193,7 +193,7 @@ def run_screening(config: dict) -> dict:
     st_details = []
     capital = config.get('account', {}).get('capital', 5000)
     for candidate in straddle_candidates[:3]:
-        print(f"  Berechne Straddle fuer {candidate.symbol}...")
+        print(f"  Berechne Straddle für {candidate.symbol}...")
         details = generate_straddle_details(candidate.symbol, candidate.current_price, capital)
         st_details.append({
             'candidate': candidate,
@@ -221,7 +221,7 @@ def main():
     # Ausgabe
     print("\n" + "=" * 60)
     print("IRON CONDOR KANDIDATEN")
-    print("(Ruhige Aktien ohne Events - Seitwaertsbewegung erwartet)")
+    print("(Ruhige Aktien ohne Events - Seitwärtsbewegung erwartet)")
     print("=" * 60)
 
     for item in results['iron_condor']:
@@ -234,13 +234,13 @@ def main():
             print(f"  Trade: Sell {d['short_put']}/{d['short_call']} | Buy {d['long_put']}/{d['long_call']}")
             print(f"  Credit: ${d['net_credit']:.2f} | Max Loss: ${d['max_loss']:.0f}")
         else:
-            print(f"  Trade nicht moeglich: {d.get('reason', 'Unbekannt')}")
+            print(f"  Trade nicht möglich: {d.get('reason', 'Unbekannt')}")
         if c.warnings:
             print(f"  Warnungen: {', '.join(c.warnings)}")
 
     print("\n" + "=" * 60)
     print("STRADDLE KANDIDATEN")
-    print("(Aktien mit Earnings/Events - Grosse Bewegung erwartet)")
+    print("(Aktien mit Earnings/Events - Große Bewegung erwartet)")
     print("=" * 60)
 
     for item in results['straddle']:
@@ -255,7 +255,7 @@ def main():
             print(f"  Trade: Buy {d['call_strike']}C + {d['put_strike']}P ({d['expiry']})")
             print(f"  Kosten: ${d['total_cost']:.0f} | Breakeven: +/-{d['breakeven_move_pct']:.1f}%")
         else:
-            print(f"  Trade nicht moeglich: {d.get('reason', 'Unbekannt')}")
+            print(f"  Trade nicht möglich: {d.get('reason', 'Unbekannt')}")
         if c.warnings:
             print(f"  Warnungen: {', '.join(c.warnings)}")
 

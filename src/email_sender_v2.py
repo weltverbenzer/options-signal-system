@@ -1,7 +1,7 @@
 """
 E-Mail-Sender v2
 ================
-Versendet E-Mails mit Kandidaten-Auswahl fuer beide Strategien.
+Versendet E-Mails mit Kandidaten-Auswahl für beide Strategien.
 Inkl. Begruendungen und Trade-Details.
 """
 
@@ -66,7 +66,7 @@ class EmailSenderV2:
             "=" * 60,
             "",
             "IRON CONDOR KANDIDATEN",
-            "(Ruhige Aktien ohne Events - Seitwaertsbewegung erwartet)",
+            "(Ruhige Aktien ohne Events - Seitwärtsbewegung erwartet)",
             "-" * 40,
         ]
 
@@ -91,7 +91,7 @@ class EmailSenderV2:
             "",
             "=" * 60,
             "STRADDLE KANDIDATEN",
-            "(Aktien mit Earnings/Events - Grosse Bewegung erwartet)",
+            "(Aktien mit Earnings/Events - Große Bewegung erwartet)",
             "-" * 40,
         ])
 
@@ -119,7 +119,7 @@ class EmailSenderV2:
         lines.extend([
             "",
             "=" * 60,
-            "WICHTIG: Dies sind Vorschlaege - DU entscheidest!",
+            "WICHTIG: Dies sind Vorschläge - DU entscheidest!",
             "Pruefe Liquiditaet (Bid/Ask) vor dem Trade.",
             "=" * 60,
         ])
@@ -309,18 +309,18 @@ class EmailSenderV2:
 
         <div class="section">
             <h2>Iron Condor Kandidaten</h2>
-            <p class="subtitle">Ruhige Aktien ohne Events - Seitwaertsbewegung erwartet</p>
+            <p class="subtitle">Ruhige Aktien ohne Events - Seitwärtsbewegung erwartet</p>
             {ic_cards if ic_cards else '<p style="color:#888;">Keine geeigneten Kandidaten gefunden</p>'}
         </div>
 
         <div class="section">
             <h2>Straddle Kandidaten</h2>
-            <p class="subtitle">Aktien mit Earnings/Events - Grosse Bewegung erwartet</p>
+            <p class="subtitle">Aktien mit Earnings/Events - Große Bewegung erwartet</p>
             {st_cards if st_cards else '<p style="color:#888;">Keine Earnings/Events heute</p>'}
         </div>
 
         <div class="disclaimer">
-            <strong>WICHTIG:</strong> Dies sind Vorschlaege zur Auswahl - DU entscheidest!<br>
+            <strong>WICHTIG:</strong> Dies sind Vorschläge zur Auswahl - DU entscheidest!<br>
             Pruefe Bid/Ask Spreads vor dem Trade. Nicht alle Optionen sind immer handelbar.
         </div>
 
@@ -333,7 +333,7 @@ class EmailSenderV2:
 """
 
     def _create_candidate_card(self, c, d, strategy: str) -> str:
-        """Erstellt HTML-Card fuer einen Kandidaten"""
+        """Erstellt HTML-Card für einen Kandidaten"""
         card_class = "card"
         if c.warnings:
             card_class += " warning"

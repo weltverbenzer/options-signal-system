@@ -1,11 +1,11 @@
 """
 Screener-Modul
 ==============
-Durchsucht eine Watchlist nach geeigneten Kandidaten fuer:
+Durchsucht eine Watchlist nach geeigneten Kandidaten für:
 - Iron Condor (keine Events, ruhiger Markt)
 - Straddle/Strangle (Earnings, Events, erwartete Bewegung)
 
-Liefert Begruendungen fuer jede Empfehlung.
+Liefert Begruendungen für jede Empfehlung.
 """
 
 import yfinance as yf
@@ -16,7 +16,7 @@ from dataclasses import dataclass
 import requests
 
 
-# ERWEITERTE Watchlist: 100+ Aktien, inkl. GUENSTIGE fuer kleine Konten
+# ERWEITERTE Watchlist: 100+ Aktien, inkl. GÜNSTIGE für kleine Konten
 DEFAULT_WATCHLIST = [
     # === INDIZES/ETFs ===
     "SPY",   # S&P 500 ETF (~$480)
@@ -38,54 +38,54 @@ DEFAULT_WATCHLIST = [
     "META",  # Meta (~$380)
     "TSLA",  # Tesla (~$180)
 
-    # === MID-CAP TECH (guenstiger!) ===
+    # === MID-CAP TECH (günstiger!) ===
     "AMD",   # AMD (~$120)
-    "INTC",  # Intel (~$22) *** GUENSTIG
+    "INTC",  # Intel (~$22) *** GÜNSTIG
     "MU",    # Micron (~$90)
     "QCOM",  # Qualcomm (~$160)
     "CRM",   # Salesforce (~$270)
     "ORCL",  # Oracle (~$130)
     "IBM",   # IBM (~$170)
     "CSCO",  # Cisco (~$48)
-    "HPQ",   # HP (~$30) *** GUENSTIG
+    "HPQ",   # HP (~$30) *** GÜNSTIG
     "DELL",  # Dell (~$85)
 
-    # === GUENSTIGE TECH/GROWTH (unter $50!) ===
-    "PLTR",  # Palantir (~$25) *** GUENSTIG
-    "SOFI",  # SoFi (~$12) *** SEHR GUENSTIG
-    "HOOD",  # Robinhood (~$20) *** GUENSTIG
-    "SNAP",  # Snap (~$11) *** SEHR GUENSTIG
-    "PINS",  # Pinterest (~$32) *** GUENSTIG
+    # === GÜNSTIGE TECH/GROWTH (unter $50!) ===
+    "PLTR",  # Palantir (~$25) *** GÜNSTIG
+    "SOFI",  # SoFi (~$12) *** SEHR GÜNSTIG
+    "HOOD",  # Robinhood (~$20) *** GÜNSTIG
+    "SNAP",  # Snap (~$11) *** SEHR GÜNSTIG
+    "PINS",  # Pinterest (~$32) *** GÜNSTIG
     "ROKU",  # Roku (~$70)
     "SPOT",  # Spotify (~$320)
     "SQ",    # Block/Square (~$70)
     "PYPL",  # PayPal (~$65)
     "SHOP",  # Shopify (~$80)
-    "U",     # Unity (~$22) *** GUENSTIG
-    "RBLX",  # Roblox (~$45) *** GUENSTIG
-    "DKNG",  # DraftKings (~$35) *** GUENSTIG
+    "U",     # Unity (~$22) *** GÜNSTIG
+    "RBLX",  # Roblox (~$45) *** GÜNSTIG
+    "DKNG",  # DraftKings (~$35) *** GÜNSTIG
     "COIN",  # Coinbase (~$180)
 
-    # === EV/AUTO (oft guenstig) ===
-    "F",     # Ford (~$10) *** SEHR GUENSTIG
-    "GM",    # GM (~$45) *** GUENSTIG
-    "RIVN",  # Rivian (~$13) *** SEHR GUENSTIG
-    "LCID",  # Lucid (~$3) *** SEHR GUENSTIG
-    "NIO",   # NIO (~$5) *** SEHR GUENSTIG
-    "XPEV",  # XPeng (~$10) *** SEHR GUENSTIG
-    "LI",    # Li Auto (~$25) *** GUENSTIG
+    # === EV/AUTO (oft günstig) ===
+    "F",     # Ford (~$10) *** SEHR GÜNSTIG
+    "GM",    # GM (~$45) *** GÜNSTIG
+    "RIVN",  # Rivian (~$13) *** SEHR GÜNSTIG
+    "LCID",  # Lucid (~$3) *** SEHR GÜNSTIG
+    "NIO",   # NIO (~$5) *** SEHR GÜNSTIG
+    "XPEV",  # XPeng (~$10) *** SEHR GÜNSTIG
+    "LI",    # Li Auto (~$25) *** GÜNSTIG
 
-    # === AIRLINES/TRAVEL (guenstig!) ===
-    "AAL",   # American Airlines (~$14) *** SEHR GUENSTIG
+    # === AIRLINES/TRAVEL (günstig!) ===
+    "AAL",   # American Airlines (~$14) *** SEHR GÜNSTIG
     "DAL",   # Delta (~$50)
     "UAL",   # United (~$75)
-    "LUV",   # Southwest (~$30) *** GUENSTIG
-    "CCL",   # Carnival (~$20) *** GUENSTIG
+    "LUV",   # Southwest (~$30) *** GÜNSTIG
+    "CCL",   # Carnival (~$20) *** GÜNSTIG
     "RCL",   # Royal Caribbean (~$180)
     "ABNB",  # Airbnb (~$130)
     "BKNG",  # Booking (~$4000) - zu teuer
     "UBER",  # Uber (~$65)
-    "LYFT",  # Lyft (~$13) *** SEHR GUENSTIG
+    "LYFT",  # Lyft (~$13) *** SEHR GÜNSTIG
 
     # === RETAIL ===
     "WMT",   # Walmart (~$165)
@@ -95,13 +95,13 @@ DEFAULT_WATCHLIST = [
     "LOW",   # Lowes (~$230)
     "NKE",   # Nike (~$75)
     "LULU",  # Lululemon (~$330)
-    "GPS",   # Gap (~$22) *** GUENSTIG
-    "M",     # Macys (~$15) *** GUENSTIG
-    "KSS",   # Kohls (~$12) *** SEHR GUENSTIG
+    "GPS",   # Gap (~$22) *** GÜNSTIG
+    "M",     # Macys (~$15) *** GÜNSTIG
+    "KSS",   # Kohls (~$12) *** SEHR GÜNSTIG
 
     # === BANKEN/FINANCE ===
     "JPM",   # JP Morgan (~$200)
-    "BAC",   # Bank of America (~$37) *** GUENSTIG
+    "BAC",   # Bank of America (~$37) *** GÜNSTIG
     "WFC",   # Wells Fargo (~$55)
     "C",     # Citigroup (~$60)
     "GS",    # Goldman (~$480)
@@ -113,12 +113,12 @@ DEFAULT_WATCHLIST = [
 
     # === HEALTHCARE/PHARMA ===
     "JNJ",   # Johnson & Johnson (~$155)
-    "PFE",   # Pfizer (~$28) *** GUENSTIG
+    "PFE",   # Pfizer (~$28) *** GÜNSTIG
     "MRK",   # Merck (~$105)
     "ABBV",  # AbbVie (~$175)
     "LLY",   # Eli Lilly (~$750) - teuer
     "BMY",   # Bristol-Myers (~$55)
-    "MRNA",  # Moderna (~$40) *** GUENSTIG
+    "MRNA",  # Moderna (~$40) *** GÜNSTIG
     "BNTX",  # BioNTech (~$110)
 
     # === ENERGIE ===
@@ -126,17 +126,17 @@ DEFAULT_WATCHLIST = [
     "CVX",   # Chevron (~$150)
     "COP",   # ConocoPhillips (~$115)
     "OXY",   # Occidental (~$55)
-    "SLB",   # Schlumberger (~$45) *** GUENSTIG
-    "HAL",   # Halliburton (~$35) *** GUENSTIG
+    "SLB",   # Schlumberger (~$45) *** GÜNSTIG
+    "HAL",   # Halliburton (~$35) *** GÜNSTIG
 
     # === MEDIA/ENTERTAINMENT ===
     "DIS",   # Disney (~$95)
     "NFLX",  # Netflix (~$550)
-    "WBD",   # Warner Bros (~$10) *** SEHR GUENSTIG
-    "PARA",  # Paramount (~$12) *** SEHR GUENSTIG
-    "CMCSA", # Comcast (~$42) *** GUENSTIG
-    "T",     # AT&T (~$18) *** SEHR GUENSTIG
-    "VZ",    # Verizon (~$40) *** GUENSTIG
+    "WBD",   # Warner Bros (~$10) *** SEHR GÜNSTIG
+    "PARA",  # Paramount (~$12) *** SEHR GÜNSTIG
+    "CMCSA", # Comcast (~$42) *** GÜNSTIG
+    "T",     # AT&T (~$18) *** SEHR GÜNSTIG
+    "VZ",    # Verizon (~$40) *** GÜNSTIG
     "TMUS",  # T-Mobile (~$200)
 
     # === INDUSTRIE ===
@@ -160,14 +160,14 @@ DEFAULT_WATCHLIST = [
 
 @dataclass
 class ScreenerResult:
-    """Ergebnis des Screeners fuer ein Symbol"""
+    """Ergebnis des Screeners für ein Symbol"""
     symbol: str
     company_name: str
     current_price: float
 
     # Strategie-Eignung
-    iron_condor_score: float  # 0-100, hoeher = besser geeignet
-    straddle_score: float     # 0-100, hoeher = besser geeignet
+    iron_condor_score: float  # 0-100, höher = besser geeignet
+    straddle_score: float     # 0-100, höher = besser geeignet
     recommended_strategy: str  # "IRON_CONDOR", "STRADDLE", "NONE"
 
     # Begruendung
@@ -189,7 +189,7 @@ class ScreenerResult:
     avg_option_volume: int
     bid_ask_spread_pct: float
 
-    # Quellen-Links (fuer Nachpruefbarkeit)
+    # Quellen-Links (für Nachpruefbarkeit)
     source_url_quote: str = ""      # Yahoo Finance Quote
     source_url_options: str = ""    # Yahoo Finance Options
     source_url_earnings: str = ""   # Earnings Kalender
@@ -226,14 +226,14 @@ class ScreenerResult:
 
 
 class StockScreener:
-    """Screent Aktien fuer Options-Strategien"""
+    """Screent Aktien für Options-Strategien"""
 
     def __init__(self, watchlist: List[str] = None, capital: int = 5000):
         self.watchlist = watchlist or DEFAULT_WATCHLIST
         self.capital = capital
-        # Fuer Straddle: Max 10% vom Konto = bei $5000 max $500
+        # Für Straddle: Max 10% vom Konto = bei $5000 max $500
         # Straddle-Kosten ca. 3-5% vom Aktienkurs * 100
-        # Also: Aktie sollte max ~$100-150 kosten fuer Straddle
+        # Also: Aktie sollte max ~$100-150 kosten für Straddle
         self.max_straddle_stock_price = (capital * 0.10) / 3  # Konservativ
 
     def screen_all(self) -> Dict[str, List[ScreenerResult]]:
@@ -268,22 +268,15 @@ class StockScreener:
             if not r.options_liquid:
                 continue  # Keine illiquiden Optionen
 
-            # Primaere Entscheidung: Earnings?
-            if r.has_earnings_soon:
-                # Earnings = Straddle Kandidat (NICHT Iron Condor!)
-                # ABER: Nur wenn der Preis passt!
+            # STRADDLE: NUR für Aktien MIT Earnings in 0-5 Tagen!
+            if r.has_earnings_soon and r.days_to_earnings is not None and 0 <= r.days_to_earnings <= 5:
                 if r.straddle_score > 40 and r.current_price <= self.max_straddle_stock_price:
                     straddle_candidates.append(r)
-            else:
-                # Keine Earnings - aber Expected Move pruefen!
-                # Iron Condor NUR wenn Expected Move < 2%
-                if r.expected_move_pct < 2.0 and r.iron_condor_score > 50:
+
+            # IRON CONDOR: Keine Earnings UND niedriger Expected Move
+            elif not r.has_earnings_soon and r.expected_move_pct < 2.0:
+                if r.iron_condor_score > 50:
                     iron_condor_candidates.append(r)
-                elif r.expected_move_pct >= 3.0:
-                    # Hoher Expected Move OHNE Earnings = auch Straddle moeglich
-                    # ABER: Nur wenn der Preis passt!
-                    if r.straddle_score > 50 and r.current_price <= self.max_straddle_stock_price:
-                        straddle_candidates.append(r)
 
         # Sortieren und Top 5
         iron_condor_candidates = sorted(
@@ -428,12 +421,12 @@ class StockScreener:
         }
 
         try:
-            # Optionskette fuer naechstes Verfallsdatum
+            # Optionskette für nächstes Verfallsdatum
             expirations = ticker.options
             if not expirations:
                 return result
 
-            # Naechstes Verfallsdatum
+            # Nächstes Verfallsdatum
             expiry = expirations[0]
             chain = ticker.option_chain(expiry)
 
@@ -465,7 +458,7 @@ class StockScreener:
 
             # IV Percentile (vereinfacht - basierend auf VIX-Vergleich)
             if avg_iv > 0:
-                # Hoehere IV = hoeherer Percentile
+                # Höhere IV = höherer Percentile
                 result['iv_percentile'] = min(100, max(0, avg_iv * 200))
 
         except Exception as e:
@@ -520,7 +513,7 @@ class StockScreener:
 
     def _get_news(self, ticker) -> List[Dict]:
         """
-        Ruft aktuelle News fuer das Symbol ab.
+        Ruft aktuelle News für das Symbol ab.
 
         Returns:
             Liste von News-Dicts mit 'title', 'summary', 'link', 'published'
@@ -528,25 +521,41 @@ class StockScreener:
         news_list = []
 
         try:
+            # yfinance.news kann None, Liste oder Dict sein
             news = ticker.news
-            if news:
-                for item in news[:5]:  # Max 5 News
-                    news_list.append({
-                        'title': item.get('title', ''),
-                        'summary': item.get('summary', '')[:200] + '...' if len(item.get('summary', '')) > 200 else item.get('summary', ''),
-                        'link': item.get('link', ''),
-                        'published': item.get('providerPublishTime', 0),
-                        'source': item.get('publisher', '')
-                    })
+            if not news:
+                return news_list
+
+            # Sicherstellen dass es eine Liste ist
+            if not isinstance(news, list):
+                return news_list
+
+            for item in news[:5]:  # Max 5 News
+                # Nur News mit Titel hinzufuegen
+                title = item.get('title', '').strip()
+                if not title:
+                    continue
+
+                summary = item.get('summary', '').strip()
+                if len(summary) > 200:
+                    summary = summary[:197] + '...'
+
+                news_list.append({
+                    'title': title,
+                    'summary': summary,
+                    'link': item.get('link', ''),
+                    'published': item.get('providerPublishTime', 0),
+                    'source': item.get('publisher', '')
+                })
         except Exception as e:
-            pass
+            print(f"    News-Abruf Fehler: {e}")
 
         return news_list
 
     def _calculate_scores(self, earnings: Dict, iv: Dict,
                           liquidity: Dict, avg_volume: int) -> Tuple[float, float, List[str], List[str]]:
         """
-        Berechnet Scores fuer Iron Condor und Straddle.
+        Berechnet Scores für Iron Condor und Straddle.
 
         Returns:
             (iron_condor_score, straddle_score, reasons, warnings)
@@ -564,7 +573,7 @@ class StockScreener:
                 # Earnings HEUTE
                 st_score += 40
                 ic_score -= 40
-                reasons.append(f"EARNINGS HEUTE - ideal fuer Straddle")
+                reasons.append(f"EARNINGS HEUTE - ideal für Straddle")
             elif days == 1:
                 # Earnings MORGEN
                 st_score += 35
@@ -576,7 +585,7 @@ class StockScreener:
                 ic_score -= 25
                 reasons.append(f"Earnings in {days} Tag(en)")
         else:
-            # Keine Earnings = gut fuer Iron Condor
+            # Keine Earnings = gut für Iron Condor
             ic_score += 15
             reasons.append("Keine Earnings in Sicht")
 
@@ -586,22 +595,22 @@ class StockScreener:
 
         # IV Einfluss
         if iv_pct > 70:
-            # Hohe IV: Gut fuer Premium-Verkauf, aber auch riskanter
+            # Hohe IV: Gut für Premium-Verkauf, aber auch riskanter
             if expected_move < 2:
                 ic_score += 10
                 reasons.append(f"Hohe IV ({iv_pct:.0f}%) bei niedrigem Expected Move - gutes Premium")
             else:
-                # Hohe IV + hoher Expected Move = GEFAEHRLICH fuer Iron Condor!
+                # Hohe IV + hoher Expected Move = GEFAEHRLICH für Iron Condor!
                 ic_score -= 20
                 st_score += 15
                 reasons.append(f"Hohe IV ({iv_pct:.0f}%) mit hohem Expected Move - Vorsicht!")
         elif iv_pct < 30:
             st_score += 10
-            reasons.append(f"Niedrige IV ({iv_pct:.0f}%) - guenstiger Straddle-Einstieg")
+            reasons.append(f"Niedrige IV ({iv_pct:.0f}%) - günstiger Straddle-Einstieg")
 
-        # EXPECTED MOVE - KRITISCH fuer Iron Condor!
+        # EXPECTED MOVE - KRITISCH für Iron Condor!
         if expected_move >= 3:
-            # Hoher Expected Move = DISQUALIFIKATION fuer Iron Condor
+            # Hoher Expected Move = DISQUALIFIKATION für Iron Condor
             ic_score -= 40  # Starke Strafe!
             st_score += 20
             reasons.append(f"HOHER Expected Move ({expected_move:.1f}%) - NUR Straddle!")
@@ -611,9 +620,9 @@ class StockScreener:
             st_score += 10
             reasons.append(f"Expected Move ({expected_move:.1f}%) - Iron Condor riskant")
         elif expected_move < 1.5:
-            # Niedriger Expected Move = ideal fuer Iron Condor
+            # Niedriger Expected Move = ideal für Iron Condor
             ic_score += 15
-            reasons.append(f"Niedriger Expected Move ({expected_move:.1f}%) - ideal fuer Iron Condor")
+            reasons.append(f"Niedriger Expected Move ({expected_move:.1f}%) - ideal für Iron Condor")
 
         # === LIQUIDITAET ===
         if not liquidity.get('is_liquid'):

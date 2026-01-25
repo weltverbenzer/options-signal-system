@@ -1,10 +1,10 @@
 """
 Webseiten-Generator v3
 ======================
-Generiert statische HTML-Seiten fuer GitHub Pages.
+Generiert statische HTML-Seiten für GitHub Pages.
 
 Features:
-- Uebersichtsseite mit allen Kandidaten
+- Übersichtsseite mit allen Kandidaten
 - Detail-Seiten pro Kandidat mit:
   - TradingView Chart
   - News-Auszuege
@@ -153,19 +153,19 @@ class WebsiteGenerator:
 
         <div class="section">
             <h2>Iron Condor Kandidaten</h2>
-            <p class="subtitle">Ruhige Aktien ohne Events - Seitwaertsbewegung erwartet</p>
+            <p class="subtitle">Ruhige Aktien ohne Events - Seitwärtsbewegung erwartet</p>
             {ic_cards if ic_cards else '<div class="no-candidates">Keine geeigneten Kandidaten gefunden</div>'}
         </div>
 
         <div class="section">
             <h2>Straddle Kandidaten</h2>
-            <p class="subtitle">Aktien mit Earnings/Events - Grosse Bewegung erwartet</p>
+            <p class="subtitle">Aktien mit Earnings/Events - Große Bewegung erwartet</p>
             {st_cards if st_cards else '<div class="no-candidates">Keine Earnings/Events heute</div>'}
         </div>
 
         <div class="disclaimer">
-            <strong>WICHTIG:</strong> Dies sind Vorschlaege - DU entscheidest!<br>
-            Klicke auf eine Karte fuer Details, News und Chart.
+            <strong>WICHTIG:</strong> Dies sind Vorschläge - DU entscheidest!<br>
+            Klicke auf eine Karte für Details, News und Chart.
         </div>
 
         <footer>
@@ -177,7 +177,7 @@ class WebsiteGenerator:
 </html>"""
 
     def _create_card_html(self, item: Dict, strategy: str) -> str:
-        """Erstellt klickbare Card fuer Hauptseite"""
+        """Erstellt klickbare Card für Hauptseite"""
         c = item['candidate']
         d = item['details']
 
@@ -253,10 +253,10 @@ class WebsiteGenerator:
                 <div class="trade-row"><span>Risiko vom Konto</span><span class="value">{d['risk_pct']:.1f}%</span></div>
                 <div class="trade-row"><span>Breakeven Up</span><span class="value">${d['breakeven_up']:.2f}</span></div>
                 <div class="trade-row"><span>Breakeven Down</span><span class="value">${d['breakeven_down']:.2f}</span></div>
-                <div class="trade-row"><span>Benoetigte Bewegung</span><span class="value">+/-{d['breakeven_move_pct']:.1f}%</span></div>
+                <div class="trade-row"><span>Benötigte Bewegung</span><span class="value">+/-{d['breakeven_move_pct']:.1f}%</span></div>
             </div>"""
         else:
-            trade_html = f'<div class="warning-box">Trade nicht moeglich: {d.get("reason", "Unbekannt")}</div>'
+            trade_html = f'<div class="warning-box">Trade nicht möglich: {d.get("reason", "Unbekannt")}</div>'
 
         # News HTML
         news_html = ""
@@ -286,7 +286,7 @@ class WebsiteGenerator:
             news_html = """
             <div class="section">
                 <h2>Aktuelle News</h2>
-                <div class="no-candidates">Keine aktuellen News verfuegbar</div>
+                <div class="no-candidates">Keine aktuellen News verfügbar</div>
             </div>"""
 
         # Earnings Info
@@ -316,7 +316,7 @@ class WebsiteGenerator:
 </head>
 <body>
     <div class="container">
-        <a href="index.html" class="back-link">Zurueck zur Uebersicht</a>
+        <a href="index.html" class="back-link">Zurück zur Übersicht</a>
 
         <header>
             <h1>{c.symbol}</h1>
@@ -396,7 +396,7 @@ class WebsiteGenerator:
 
         <footer>
             <p>Generiert: {datetime.now().strftime('%d.%m.%Y %H:%M')} MEZ</p>
-            <a href="index.html">Zurueck zur Uebersicht</a>
+            <a href="index.html">Zurück zur Übersicht</a>
         </footer>
     </div>
 </body>
