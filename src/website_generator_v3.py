@@ -268,15 +268,7 @@ class WebsiteGeneratorV3:
 
             <div class="metrics">
                 <div class="metric">
-                    <div class="metric-label">Expected Move</div>
-                    <div class="metric-value">{c.expected_move_pct:.1f}%</div>
-                </div>
-                <div class="metric">
-                    <div class="metric-label">IV Percentile</div>
-                    <div class="metric-value">{c.iv_percentile:.0f}%</div>
-                </div>
-                <div class="metric">
-                    <div class="metric-label">News</div>
+                    <div class="metric-label">News Anzahl</div>
                     <div class="metric-value">{c.news_count}</div>
                 </div>
                 <div class="metric">
@@ -465,12 +457,8 @@ class WebsiteGeneratorV3:
                     <div class="metric-value">{c.movement_score:.0f}/100</div>
                 </div>
                 <div class="metric">
-                    <div class="metric-label">Expected Move</div>
-                    <div class="metric-value">{c.expected_move_pct:.1f}%</div>
-                </div>
-                <div class="metric">
-                    <div class="metric-label">IV Percentile</div>
-                    <div class="metric-value">{c.iv_percentile:.0f}%</div>
+                    <div class="metric-label">News Anzahl</div>
+                    <div class="metric-value">{c.news_count}</div>
                 </div>
                 <div class="metric">
                     <div class="metric-label">News Sentiment</div>

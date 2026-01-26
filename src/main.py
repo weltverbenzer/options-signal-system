@@ -95,8 +95,7 @@ def main():
     for i, c in enumerate(results['candidates'], 1):
         print(f"\n#{i} {c.symbol} ({c.company_name})")
         print(f"  Kurs: ${c.current_price:.2f} | Movement Score: {c.movement_score:.0f}/100")
-        print(f"  Expected Move: {c.expected_move_pct:.1f}% | IV Percentile: {c.iv_percentile:.0f}%")
-        print(f"  News: {c.news_count} ({c.sentiment_label})")
+        print(f"  News: {c.news_count} Artikel | Sentiment: {c.sentiment_label}")
         if c.has_earnings_soon:
             print(f"  Earnings: {c.earnings_date} (in {c.days_to_earnings} Tagen)")
         print(f"  Gründe: {', '.join(c.reasons)}")

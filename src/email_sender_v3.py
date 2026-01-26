@@ -73,7 +73,6 @@ class EmailSenderV3:
         for i, c in enumerate(results.get('candidates', []), 1):
             lines.append(f"\n#{i} {c.symbol} ({c.company_name})")
             lines.append(f"  Kurs: ${c.current_price:.2f} | Score: {c.movement_score:.0f}/100")
-            lines.append(f"  Expected Move: {c.expected_move_pct:.1f}%")
             lines.append(f"  News: {c.news_count} Artikel | Sentiment: {c.sentiment_label}")
             if c.has_earnings_soon:
                 lines.append(f"  EARNINGS: {c.earnings_date} (in {c.days_to_earnings} Tagen)")
@@ -187,9 +186,8 @@ class EmailSenderV3:
             margin: 10px 0;
         }}
         .metrics {{
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            display: flex;
+            gap: 15px;
             margin: 15px 0;
         }}
         .metric {{
@@ -329,15 +327,7 @@ class EmailSenderV3:
 
             <div class="metrics">
                 <div class="metric">
-                    <div class="metric-label">Expected Move</div>
-                    <div class="metric-value">{c.expected_move_pct:.1f}%</div>
-                </div>
-                <div class="metric">
-                    <div class="metric-label">IV Percentile</div>
-                    <div class="metric-value">{c.iv_percentile:.0f}%</div>
-                </div>
-                <div class="metric">
-                    <div class="metric-label">News Count</div>
+                    <div class="metric-label">News Anzahl</div>
                     <div class="metric-value">{c.news_count}</div>
                 </div>
                 <div class="metric">
