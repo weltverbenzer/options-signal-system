@@ -10,6 +10,8 @@ from datetime import datetime, timedelta
 from typing import List, Dict, Optional
 from dataclasses import dataclass
 import time
+import requests
+from xml.etree import ElementTree
 
 
 @dataclass
@@ -96,17 +98,22 @@ class MovementScreener:
         print(f"Universe: {len(self.universe)} Symbole\n")
 
         candidates = []
+        total_news_found = 0
 
         for i, symbol in enumerate(self.universe, 1):
             print(f"[{i}/{len(self.universe)}] Analysiere {symbol}...", end=" ")
 
             try:
                 candidate = self._analyze_symbol(symbol)
-                if candidate and candidate.movement_score > 20:  # Mindest-Score
-                    candidates.append(candidate)
-                    print(f"✓ Score: {candidate.movement_score:.0f} ({candidate.news_count} News)")
+                if candidate:
+                    total_news_found += candidate.news_count
+                    if candidate.movement_score > 10:  # Mindest-Score gesenkt
+                        candidates.append(candidate)
+                        print(f"✓ Score: {candidate.movement_score:.0f} ({candidate.news_count} News, Sentiment: {candidate.sentiment_label})")
+                    else:
+                        print(f"✗ Score zu niedrig: {candidate.movement_score:.0f} ({candidate.news_count} News)")
                 else:
-                    print("✗ Keine/wenig News")
+                    print("✗ Keine News")
 
             except Exception as e:
                 print(f"✗ Fehler: {e}")
@@ -117,7 +124,8 @@ class MovementScreener:
         # Sortiere nach Score
         candidates.sort(key=lambda x: x.movement_score, reverse=True)
 
-        print(f"\n=== GEFUNDEN: {len(candidates)} Kandidaten ===\n")
+        print(f"\n=== GEFUNDEN: {len(candidates)} Kandidaten ===")
+        print(f"=== TOTAL: {total_news_found} News-Artikel durchsucht ===\n")
         return candidates
 
     def _analyze_symbol(self, symbol: str) -> Optional[MovementCandidate]:
@@ -138,8 +146,8 @@ class MovementScreener:
         # Earnings prüfen
         earnings_info = self._check_earnings(ticker)
 
-        # News analysieren
-        news_data = self._analyze_news(ticker)
+        # News analysieren (Symbol übergeben für RSS-Feed)
+        news_data = self._analyze_news(ticker, symbol)
 
         # Nur behalten wenn News vorhanden
         if news_data['count'] == 0:
@@ -226,7 +234,36 @@ class MovementScreener:
 
         return result
 
-    def _analyze_news(self, ticker) -> Dict:
+    def _fetch_news_from_rss(self, symbol: str) -> List[Dict]:
+        """Holt News direkt von Yahoo Finance RSS Feed"""
+        try:
+            # Yahoo Finance RSS Feed URL
+            url = f"https://finance.yahoo.com/rss/headline?s={symbol}"
+
+            response = requests.get(url, timeout=10)
+            if response.status_code != 200:
+                return []
+
+            # Parse XML
+            root = ElementTree.fromstring(response.content)
+
+            news_items = []
+            for item in root.findall('.//item')[:15]:
+                title_elem = item.find('title')
+                link_elem = item.find('link')
+
+                if title_elem is not None and title_elem.text:
+                    news_items.append({
+                        'title': title_elem.text,
+                        'link': link_elem.text if link_elem is not None else '#',
+                        'publisher': 'Yahoo Finance'
+                    })
+
+            return news_items
+        except Exception as e:
+            return []
+
+    def _analyze_news(self, ticker, symbol: str) -> Dict:
         """Analysiert News-Sentiment"""
         result = {
             'count': 0,
@@ -236,33 +273,53 @@ class MovementScreener:
         }
 
         try:
-            news = ticker.news
-            if not news or not isinstance(news, list):
+            # Methode 1: RSS Feed (zuverlässiger)
+            news_items = self._fetch_news_from_rss(symbol)
+
+            # Methode 2: yfinance ticker.news als Fallback
+            if not news_items:
+                try:
+                    yf_news = ticker.news
+                    if yf_news and isinstance(yf_news, list):
+                        news_items = yf_news[:15]
+                except:
+                    pass
+
+            if not news_items:
                 return result
 
             bullish_count = 0
             bearish_count = 0
 
-            for item in news[:10]:  # Top 10 News
-                title = item.get('title', '').lower()
-                if not title:
+            for item in news_items[:15]:
+                if not isinstance(item, dict):
                     continue
 
+                title = item.get('title', '')
+                if not title or not isinstance(title, str):
+                    continue
+
+                title_lower = title.lower()
+
                 # Sentiment analysieren
-                bull_hits = sum(1 for kw in self.bullish_keywords if kw in title)
-                bear_hits = sum(1 for kw in self.bearish_keywords if kw in title)
+                bull_hits = sum(1 for kw in self.bullish_keywords if kw in title_lower)
+                bear_hits = sum(1 for kw in self.bearish_keywords if kw in title_lower)
 
                 if bull_hits > bear_hits:
                     bullish_count += 1
+                    sentiment = 'bullish'
                 elif bear_hits > bull_hits:
                     bearish_count += 1
+                    sentiment = 'bearish'
+                else:
+                    sentiment = 'neutral'
 
                 # News speichern
                 result['articles'].append({
-                    'title': item.get('title', 'Keine Headline'),
+                    'title': title,
                     'link': item.get('link', '#'),
-                    'publisher': item.get('publisher', 'Unbekannt'),
-                    'sentiment': 'bullish' if bull_hits > bear_hits else ('bearish' if bear_hits > bull_hits else 'neutral')
+                    'publisher': item.get('publisher', 'Yahoo Finance'),
+                    'sentiment': sentiment
                 })
 
             result['count'] = len(result['articles'])
@@ -275,8 +332,9 @@ class MovementScreener:
             else:
                 result['label'] = "0"
 
-        except:
-            pass
+        except Exception as e:
+            # Debug-Output
+            print(f"[News-Error: {str(e)[:30]}]", end=" ")
 
         return result
 
